@@ -48,7 +48,7 @@ loader.load(
     // If the file is loaded, add it to the scene
     object = gltf.scene;
     scene.add(object);
-    object.lookAt(new THREE.Vector3(-1,9999, 0));
+    object.lookAt(new THREE.Vector3(1,9999, 0));
     // object.rotation.x = Math.PI / 2; // 45 degrees (upward angle)
   },
   function (xhr) {
@@ -84,17 +84,47 @@ scene.add(ambientLight);
 if (objToRender === "rocket") {
   controls = new OrbitControls(camera, renderer.domElement);
 }
-
+const rocketSpeed = 0.1; // Adjust this for faster/slower movement
 // Render the scene
+// Variables for circles
+const innerCircleRadius = 15; // Radius of the camera's path
+const outerCircleRadius = 25; // Radius of the rocket's path
+let angle = 0; // Angle to determine positions on the circles
+const speed = 0.005; // Speed of the rotation
+
+
 function animate() {
   requestAnimationFrame(animate);
-  // Here we could add some code to update the scene, adding some automatic movement
 
+  // Calculate positions of the rocket on the circle in the YZ plane
+  const rocketX = outerCircleRadius * Math.cos(angle);
+  const rocketZ = outerCircleRadius * Math.sin(angle);
+
+  // Calculate the tangent direction (derivative of the circle equation)
+  const tangentX = -Math.sin(angle); // Derivative of cos(angle)
+  const tangentZ = Math.cos(angle);  // Derivative of sin(angle)
+
+  // Set the rocket's position (circling around the camera in the YZ plane)
   if (object && objToRender === "rocket") {
-    object.rotation.x += 0.1; // Adjust this value for faster/slower rotation
-    // object.position.x -= 0.1;
+    object.position.set(rocketX, 0, rocketZ); // Rocket moves in the YZ plane around the camera
+
+    // Set the rocket's rotation to face tangentially to the circle
+    const tangentVector = new THREE.Vector3(tangentX, 0, tangentZ).normalize();
+    const upVector = new THREE.Vector3(0, 1, 0); // Y-axis is the up direction
+    const quaternion = new THREE.Quaternion().setFromUnitVectors(upVector, tangentVector);
+    object.setRotationFromQuaternion(quaternion);
   }
 
+  // Keep the camera stationary at the center
+  camera.position.set(0, 0, 0); // Camera stays at the center of the scene
+
+  // Make the camera always look at the rocket
+  camera.lookAt(rocketX, 0, rocketZ);
+
+  // Update the angle for the next frame
+  angle += speed;
+
+  // Render the scene
   renderer.render(scene, camera);
 }
 
