@@ -52,7 +52,7 @@ loader.load(
     // If the file is loaded, add it to the scene
     object = gltf.scene;
     scene.add(object);
-    object.lookAt(new THREE.Vector3(0,1,0));
+    //object.lookAt(new THREE.Vector3(0,1,1));
   },
   function (xhr) {
     // While it is loading, log the progress
@@ -89,7 +89,7 @@ if (objToRender === "rocket") {
 }
 
 // Load the floor texture (one of the skybox images)
-const floorTexture = new THREE.TextureLoader().load('skybox/front.png');  // Using the front skybox image as the floor texture
+const floorTexture = new THREE.TextureLoader().load('skybox/landing.jpg');  // Using the front skybox image as the floor texture
 floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;  // Repeat the texture for the floor
 floorTexture.repeat.set(10, 10);  // Adjust the repetition to cover a larger area
 
@@ -135,53 +135,69 @@ let maxSpeed = 1; // Maximum velocity
 let rocketVelocity = new THREE.Vector3(0, 0, 0); // Current velocity
 let rocketAcceleration = new THREE.Vector3(0, 0, 0); // Current acceleration
 
+let rotationSpeed = 0.25; // Rotation speed (angle per frame)
+let targetQuaternion = new THREE.Quaternion(); // To store the target direction
+
+// A flag to track if the rocket is aligned to the target direction
+let isAligned = false; 
+
+// Function to update the rocket's direction (set facing direction)
+function setRocketDirection(direction) {
+  if (object) {
+    const upVector = new THREE.Vector3(0, 1, 0); // Default up direction
+    const lookVector = direction.clone().normalize(); // Normalize the direction vector
+
+    // Calculate the target quaternion for the new direction
+    targetQuaternion = new THREE.Quaternion().setFromUnitVectors(upVector, lookVector);
+    //isAligned = false; // Reset alignment flag when we change direction
+  }
+}
+
 // Key press logic for setting acceleration
 document.onkeydown = (e) => {
   switch (e.key) {
-    //case "ArrowUp":
     case "w":
     case "W":
       rocketAcceleration.z = -moveSpeed; // Accelerate forward
+      setRocketDirection(new THREE.Vector3(0, 0, -1)); // Point rocket forward
       break;
-    //case "ArrowDown":
     case "s":
     case "S":
       rocketAcceleration.z = moveSpeed; // Accelerate backward
+      setRocketDirection(new THREE.Vector3(0, 0, 1)); // Point rocket backward
       break;
-    //case "ArrowLeft":
     case "a":
     case "A":
       rocketAcceleration.x = -moveSpeed; // Accelerate left
+      setRocketDirection(new THREE.Vector3(-1, 0, 0)); // Point rocket left
       break;
-    //case "ArrowRight":
     case "d":
     case "D":
       rocketAcceleration.x = moveSpeed; // Accelerate right
+      setRocketDirection(new THREE.Vector3(1, 0, 0)); // Point rocket right
       break;
     case "ArrowUp":
-      rocketAcceleration.y = moveSpeed;
-      break
+      rocketAcceleration.y = moveSpeed; // Accelerate up
+      setRocketDirection(new THREE.Vector3(0, 1, 0)); // Point rocket upward
+      break;
     case "ArrowDown":
-      rocketAcceleration.y = -moveSpeed;
-      break 
+      rocketAcceleration.y = -moveSpeed; // Accelerate down
+      setRocketDirection(new THREE.Vector3(0, -1, 0)); // Point rocket downward
+      break;
   }
 };
 
 // Key release logic to stop acceleration
 document.onkeyup = (e) => {
   switch (e.key) {
-    //case "ArrowUp":
     case "w":
     case "W":
-    //case "ArrowDown":
     case "s":
     case "S":
       rocketAcceleration.z = 0; // Stop forward/backward acceleration
       break;
-    case "ArrowLeft":
     case "a":
     case "A":
-    case "ArrowRight":
     case "d":
     case "D":
       rocketAcceleration.x = 0; // Stop left/right acceleration
@@ -189,14 +205,39 @@ document.onkeyup = (e) => {
     case "ArrowUp":
     case "ArrowDown":
       rocketAcceleration.y = 0; // Stop up/down acceleration
+      break;
   }
 };
 
-// Update the animate function
+// function rotateObject() {
+//   if (object) {
+//     // Smoothly rotate the rocket towards the target direction
+//      // 0.1 controls the rotation speed
+//     // Check if the rocket is aligned with the target direction
+//     if (object.quaternion.angleTo(targetQuaternion) < 0.1) {
+//       isAligned = true; // Mark as aligned when the angle between the quaternions is small
+//     }
+
+//     // If the rocket is aligned, start spinning around its own axis
+//     if (isAligned) {
+//       // Get the current local axis to rotate around (e.g., z-axis in the rocket's local coordinate space)
+//       let axis = object.getWorldDirection(new THREE.Vector3()); // Get the direction vector of the rocket
+
+//       // Rotate around the axis perpendicular to the direction it's facing
+//       // We'll apply the cross product of the up vector and the direction for the axis of rotation
+//       const localAxis = new THREE.Vector3().crossVectors(new THREE.Vector3(1, 0, 0), axis).normalize(); 
+
+//       // Apply the rotation around the local axis
+//       object.rotateOnAxis(localAxis, rotationSpeed);
+//     }
+//   }
+// }
+
 function animate() {
   requestAnimationFrame(animate);
 
   if (object) {
+    object.quaternion.slerp(targetQuaternion, 0.1);
     // Update velocity based on acceleration
     rocketVelocity.add(rocketAcceleration);
 
@@ -204,40 +245,41 @@ function animate() {
     rocketVelocity.x = THREE.MathUtils.clamp(rocketVelocity.x, -maxSpeed, maxSpeed);
     rocketVelocity.z = THREE.MathUtils.clamp(rocketVelocity.z, -maxSpeed, maxSpeed);
 
-    // Apply velocity to the rocket's position for smooth movement
+    // Apply velocity to the rocket's position
     object.position.add(rocketVelocity);
 
-    // Apply a friction effect to slow down when no keys are pressed
-    rocketVelocity.multiplyScalar(0.90); // Dampen velocity slightly each frame
+    // Apply friction effect to slow down when no keys are pressed
+    rocketVelocity.multiplyScalar(0.98);
 
-    // Update camera position relative to the rocket
+    // Update the camera position to follow the rocket
     const targetPosition = new THREE.Vector3(
       object.position.x + 10, // X position relative to rocket
       object.position.y + 4,  // Y position relative to rocket
       object.position.z + 10  // Z position relative to rocket
     );
-
     camera.position.lerp(targetPosition, 0.05); // Smoothly follow the rocket
     camera.lookAt(object.position); // Make camera always look at the rocket
   }
+
+  //rotateObject(); // Rotate based on targetQuaternion
 
   // Render the scene
   renderer.render(scene, camera);
 }
 
 
-// Add a listener to the window, so we can resize the window and the camera
-window.addEventListener("resize", function () {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-});
+// // Add a listener to the window, so we can resize the window and the camera
+// window.addEventListener("resize", function () {
+//   camera.aspect = window.innerWidth / window.innerHeight;
+//   camera.updateProjectionMatrix();
+//   renderer.setSize(window.innerWidth, window.innerHeight);
+// });
 
-// Add mouse position listener, so we can make the eye move
-document.onmousemove = (e) => {
-  mouseX = e.clientX;
-  mouseY = e.clientY;
-}
+// // Add mouse position listener, so we can make the eye move
+// document.onmousemove = (e) => {
+//   mouseX = e.clientX;
+//   mouseY = e.clientY;
+// }
 
 // Start the 3D rendering
 animate();
