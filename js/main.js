@@ -113,63 +113,82 @@ loaderFont.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.
 });
 
 /// Variables for controlling rocket movement
-let moveSpeed = 0.5;  // Speed at which the rocket moves
-let cameraDistance = 10;  // Distance between camera and rocket
-let rocketRotateSpeed = 0.05;
+let moveSpeed = 0.1; // Speed at which the rocket moves
+let rocketVelocity = new THREE.Vector3(0, 0, 0); // Velocity vector to control movement
 
-// Key press logic for rocket movement (up, down, left, right, forward, backward)
+// Key press logic for setting velocity
 document.onkeydown = (e) => {
-  if (e.key === "ArrowUp") {
-    if (object) {
-      object.position.z -= moveSpeed;
-    }
-  } else if (e.key === "ArrowDown") {
-    if (object) {
-      object.position.z += moveSpeed;
-    }
-  } else if (e.key === "ArrowLeft") {
-    if (object) {
-      object.position.x -= moveSpeed;
-    }
-  } else if (e.key === "ArrowRight") {
-    if (object) {
-      object.position.x += moveSpeed;
-    }
-  } else if (e.key === "w" || e.key === "W") {
-    if (object) {
-      object.position.y += moveSpeed;
-    }
-  } else if (e.key === "s" || e.key === "S") {
-    if (object) {
-      object.position.y -= moveSpeed;
-    }
+  switch (e.key) {
+    case "ArrowUp":
+    case "w":
+    case "W":
+      rocketVelocity.z = -moveSpeed; // Forward
+      break;
+    case "ArrowDown":
+    case "s":
+    case "S":
+      rocketVelocity.z = moveSpeed; // Backward
+      break;
+    case "ArrowLeft":
+    case "a":
+    case "A":
+      rocketVelocity.x = -moveSpeed; // Left
+      break;
+    case "ArrowRight":
+    case "d":
+    case "D":
+      rocketVelocity.x = moveSpeed; // Right
+      break;
   }
 };
 
-// Update the animate function to keep the camera following the rocket
+// Key release logic to stop movement
+document.onkeyup = (e) => {
+  switch (e.key) {
+    case "ArrowUp":
+    case "w":
+    case "W":
+    case "ArrowDown":
+    case "s":
+    case "S":
+      rocketVelocity.z = 0; // Stop forward/backward movement
+      break;
+    case "ArrowLeft":
+    case "a":
+    case "A":
+    case "ArrowRight":
+    case "d":
+    case "D":
+      rocketVelocity.x = 0; // Stop left/right movement
+      break;
+  }
+};
+
+// Update the animate function
 function animate() {
   requestAnimationFrame(animate);
-  // Smoothly rotate the rocket
-  object.rotation.y += rocketRotateSpeed;
-  
+
+  // Apply velocity to the rocket's position for smooth movement
   if (object) {
-    // Smoothly update the camera position using lerp
+    object.position.add(rocketVelocity); // Increment position by velocity each frame
+
+    // Update camera position relative to the rocket
     const targetPosition = new THREE.Vector3(
       object.position.x + 10, // X position relative to rocket
       object.position.y + 4,  // Y position relative to rocket
-      object.position.z + 10   // Z position relative to rocket
+      object.position.z + 10  // Z position relative to rocket
     );
 
-    // Lerp the camera position for a smooth movement
-    camera.position.lerp(targetPosition, 0.025); // 0.1 controls the smoothness
-
-    // Ensure the camera always looks at the rocket
-    camera.lookAt(object.position);
+    camera.position.lerp(targetPosition, 0.05); // Smoothly follow the rocket
+    camera.lookAt(object.position); // Make camera always look at the rocket
   }
 
   // Render the scene
   renderer.render(scene, camera);
 }
+
+// Start the animation loop
+animate();
 
 // Add a listener to the window, so we can resize the window and the camera
 window.addEventListener("resize", function () {
