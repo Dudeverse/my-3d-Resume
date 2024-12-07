@@ -11,6 +11,24 @@ const scene = new THREE.Scene();
 // Create a new camera with positions and angles
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
+// Create a CubeTextureLoader for the skybox
+const cubeTextureLoader = new THREE.CubeTextureLoader();
+const spaceTextures = cubeTextureLoader.load([
+  'skybox/front.png',  // Front face
+  'skybox/back.png',   // Back face
+  'skybox/left.png',   // Left face
+  'skybox/right.png',  // Right face
+  'skybox/top.png',    // Top face
+  'skybox/bottom.png'  // Bottom face
+]);
+
+// Set the scene's background to the skybox
+scene.background = spaceTextures;
+
+
+
+
+
 // Keep track of the mouse position, so we can make the eye move
 let mouseX = window.innerWidth / 2;
 let mouseY = window.innerHeight / 2;
@@ -112,46 +130,53 @@ loaderFont.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.
   createText('Z', new THREE.Vector3(0, 0, 10));
 });
 
-/// Variables for controlling rocket movement
-let moveSpeed = 0.1; // Speed at which the rocket moves
-let rocketVelocity = new THREE.Vector3(0, 0, 0); // Velocity vector to control movement
+let moveSpeed = 0.02; // Acceleration rate
+let maxSpeed = 1; // Maximum velocity
+let rocketVelocity = new THREE.Vector3(0, 0, 0); // Current velocity
+let rocketAcceleration = new THREE.Vector3(0, 0, 0); // Current acceleration
 
-// Key press logic for setting velocity
+// Key press logic for setting acceleration
 document.onkeydown = (e) => {
   switch (e.key) {
-    case "ArrowUp":
+    //case "ArrowUp":
     case "w":
     case "W":
-      rocketVelocity.z = -moveSpeed; // Forward
+      rocketAcceleration.z = -moveSpeed; // Accelerate forward
       break;
-    case "ArrowDown":
+    //case "ArrowDown":
     case "s":
     case "S":
-      rocketVelocity.z = moveSpeed; // Backward
+      rocketAcceleration.z = moveSpeed; // Accelerate backward
       break;
-    case "ArrowLeft":
+    //case "ArrowLeft":
     case "a":
     case "A":
-      rocketVelocity.x = -moveSpeed; // Left
+      rocketAcceleration.x = -moveSpeed; // Accelerate left
       break;
-    case "ArrowRight":
+    //case "ArrowRight":
     case "d":
     case "D":
-      rocketVelocity.x = moveSpeed; // Right
+      rocketAcceleration.x = moveSpeed; // Accelerate right
       break;
+    case "ArrowUp":
+      rocketAcceleration.y = moveSpeed;
+      break
+    case "ArrowDown":
+      rocketAcceleration.y = -moveSpeed;
+      break 
   }
 };
 
-// Key release logic to stop movement
+// Key release logic to stop acceleration
 document.onkeyup = (e) => {
   switch (e.key) {
-    case "ArrowUp":
+    //case "ArrowUp":
     case "w":
     case "W":
-    case "ArrowDown":
+    //case "ArrowDown":
     case "s":
     case "S":
-      rocketVelocity.z = 0; // Stop forward/backward movement
+      rocketAcceleration.z = 0; // Stop forward/backward acceleration
       break;
     case "ArrowLeft":
     case "a":
@@ -159,8 +184,11 @@ document.onkeyup = (e) => {
     case "ArrowRight":
     case "d":
     case "D":
-      rocketVelocity.x = 0; // Stop left/right movement
+      rocketAcceleration.x = 0; // Stop left/right acceleration
       break;
+    case "ArrowUp":
+    case "ArrowDown":
+      rocketAcceleration.y = 0; // Stop up/down acceleration
   }
 };
 
@@ -168,9 +196,19 @@ document.onkeyup = (e) => {
 function animate() {
   requestAnimationFrame(animate);
 
-  // Apply velocity to the rocket's position for smooth movement
   if (object) {
-    object.position.add(rocketVelocity); // Increment position by velocity each frame
+    // Update velocity based on acceleration
+    rocketVelocity.add(rocketAcceleration);
+
+    // Clamp velocity to the maximum speed
+    rocketVelocity.x = THREE.MathUtils.clamp(rocketVelocity.x, -maxSpeed, maxSpeed);
+    rocketVelocity.z = THREE.MathUtils.clamp(rocketVelocity.z, -maxSpeed, maxSpeed);
+
+    // Apply velocity to the rocket's position for smooth movement
+    object.position.add(rocketVelocity);
+
+    // Apply a friction effect to slow down when no keys are pressed
+    rocketVelocity.multiplyScalar(0.90); // Dampen velocity slightly each frame
 
     // Update camera position relative to the rocket
     const targetPosition = new THREE.Vector3(
@@ -187,8 +225,6 @@ function animate() {
   renderer.render(scene, camera);
 }
 
-// Start the animation loop
-animate();
 
 // Add a listener to the window, so we can resize the window and the camera
 window.addEventListener("resize", function () {
