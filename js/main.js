@@ -53,7 +53,27 @@ loader.load(
     object = gltf.scene;
     scene.add(object);
     //object.lookAt(new THREE.Vector3(0,1,1));
+    const loaderFont = new THREE.FontLoader();
+    loaderFont.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', function (font) {
+      const createText = (text, position) => {
+        const geometry = new THREE.TextGeometry(text, {
+          font: font,
+          size: 0.5, // Small size for labels
+          height: 0.05, // Thin text
+        });
+        const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.position.set(position.x, position.y, position.z);
+        object.add(mesh); // Attach text to the rocket object
+      };
+
+      // Add X, Y, Z labels relative to the rocket's local axes
+      createText('X', { x: 5, y: 0, z: 0 });
+      createText('Y', { x: 0, y: 5, z: 0 });
+      createText('Z', { x: 0, y: 0, z: 5 });
+    });
   },
+  
   function (xhr) {
     // While it is loading, log the progress
     console.log((xhr.loaded / xhr.total * 100) + '% loaded');
