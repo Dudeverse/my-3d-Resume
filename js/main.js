@@ -113,7 +113,7 @@ loaderFont.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.
 });
 
 /// Variables for controlling rocket movement
-let moveSpeed = 2;  // Speed at which the rocket moves
+let moveSpeed = 0.5;  // Speed at which the rocket moves
 let cameraDistance = 10;  // Distance between camera and rocket
 let rocketRotateSpeed = 0.05;
 
@@ -149,15 +149,22 @@ document.onkeydown = (e) => {
 // Update the animate function to keep the camera following the rocket
 function animate() {
   requestAnimationFrame(animate);
+  // Smoothly rotate the rocket
   object.rotation.y += rocketRotateSpeed;
   
   if (object) {
-   // Keep the camera behind the rocket (relative position)
-     camera.position.x = object.position.x + 10;  // Adjust camera position for X-axis
-     camera.position.y = object.position.y + 4;  // Adjust camera position for Y-axis
-     camera.position.z = object.position.z + 10;   // Adjust camera distance in Z-axis
+    // Smoothly update the camera position using lerp
+    const targetPosition = new THREE.Vector3(
+      object.position.x + 10, // X position relative to rocket
+      object.position.y + 4,  // Y position relative to rocket
+      object.position.z + 10   // Z position relative to rocket
+    );
 
-    camera.lookAt(object.position); // Make the camera look at the rocket
+    // Lerp the camera position for a smooth movement
+    camera.position.lerp(targetPosition, 0.025); // 0.1 controls the smoothness
+
+    // Ensure the camera always looks at the rocket
+    camera.lookAt(object.position);
   }
 
   // Render the scene
