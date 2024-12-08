@@ -25,10 +25,6 @@ const spaceTextures = cubeTextureLoader.load([
 // Set the scene's background to the skybox
 scene.background = spaceTextures;
 
-
-
-
-
 // Keep track of the mouse position, so we can make the eye move
 let mouseX = window.innerWidth / 2;
 let mouseY = window.innerHeight / 2;
@@ -154,12 +150,7 @@ let moveSpeed = 0.02; // Acceleration rate
 let maxSpeed = 1; // Maximum velocity
 let rocketVelocity = new THREE.Vector3(0, 0, 0); // Current velocity
 let rocketAcceleration = new THREE.Vector3(0, 0, 0); // Current acceleration
-
-let rotationSpeed = 0.25; // Rotation speed (angle per frame)
 let targetQuaternion = new THREE.Quaternion(); // To store the target direction
-
-// A flag to track if the rocket is aligned to the target direction
-let isAligned = false; 
 
 // Function to update the rocket's direction (set facing direction)
 function setRocketDirection(direction) {
@@ -169,27 +160,27 @@ function setRocketDirection(direction) {
 
     // Calculate the target quaternion for the new direction
     targetQuaternion = new THREE.Quaternion().setFromUnitVectors(upVector, lookVector);
-    //isAligned = false; // Reset alignment flag when we change direction
   }
 }
-
+let spinSpeed=0.25
 // Key press logic for setting acceleration
 document.onkeydown = (e) => {
   switch (e.key) {
     case "w":
     case "W":
       rocketAcceleration.z = -moveSpeed; // Accelerate forward
-      setRocketDirection(new THREE.Vector3(0, 0, -1)); // Point rocket forward
+      setRocketDirection(new THREE.Vector3(0, 0, -1));
+      //spinRocket(new THREE.Vector3(0, 0, -1))     
       break;
     case "s":
     case "S":
       rocketAcceleration.z = moveSpeed; // Accelerate backward
-      setRocketDirection(new THREE.Vector3(0, 0, 1)); // Point rocket backward
+      setRocketDirection(new THREE.Vector3(0, 0, 1));
       break;
     case "a":
     case "A":
       rocketAcceleration.x = -moveSpeed; // Accelerate left
-      setRocketDirection(new THREE.Vector3(-1, 0, 0)); // Point rocket left
+      setRocketDirection(new THREE.Vector3(-1, 0, 0));
       break;
     case "d":
     case "D":
@@ -198,11 +189,11 @@ document.onkeydown = (e) => {
       break;
     case "ArrowUp":
       rocketAcceleration.y = moveSpeed; // Accelerate up
-      setRocketDirection(new THREE.Vector3(0, 1, 0)); // Point rocket upward
+      setRocketDirection(new THREE.Vector3(0, 1, 0));
       break;
     case "ArrowDown":
       rocketAcceleration.y = -moveSpeed; // Accelerate down
-      setRocketDirection(new THREE.Vector3(0, -1, 0)); // Point rocket downward
+      setRocketDirection(new THREE.Vector3(0, -1, 0));
       break;
   }
 };
@@ -229,35 +220,33 @@ document.onkeyup = (e) => {
   }
 };
 
-// function rotateObject() {
-//   if (object) {
-//     // Smoothly rotate the rocket towards the target direction
-//      // 0.1 controls the rotation speed
-//     // Check if the rocket is aligned with the target direction
-//     if (object.quaternion.angleTo(targetQuaternion) < 0.1) {
-//       isAligned = true; // Mark as aligned when the angle between the quaternions is small
-//     }
+function spinRocket() {
+  if (object) {
+    // You can choose which world axis to rotate around, e.g., X, Y, or Z.
+    // For example, rotating around world Y-axis:
+    object.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), spinSpeed);
+    
+    // Or rotating around world X-axis:
+    //object.rotateOnWorldAxis(new THREE.Vector3(0, 0, 0), spinSpeed);
 
-//     // If the rocket is aligned, start spinning around its own axis
-//     if (isAligned) {
-//       // Get the current local axis to rotate around (e.g., z-axis in the rocket's local coordinate space)
-//       let axis = object.getWorldDirection(new THREE.Vector3()); // Get the direction vector of the rocket
-
-//       // Rotate around the axis perpendicular to the direction it's facing
-//       // We'll apply the cross product of the up vector and the direction for the axis of rotation
-//       const localAxis = new THREE.Vector3().crossVectors(new THREE.Vector3(1, 0, 0), axis).normalize(); 
-
-//       // Apply the rotation around the local axis
-//       object.rotateOnAxis(localAxis, rotationSpeed);
-//     }
-//   }
-// }
+    // Or rotating around world Z-axis:
+    // object.rotateOnWorldAxis(new THREE.Vector3(0, 0, 1), spinSpeed);
+    
+    // For spinning around a combination of axes (for example X and Y):
+    // First, spin around the world X-axis
+    //object.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), spinSpeed * 0.00005);
+    
+    // Then, spin around the world Y-axis
+    //object.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), spinSpeed * 0.00005);
+  }
+}
 
 function animate() {
   requestAnimationFrame(animate);
 
   if (object) {
-    object.quaternion.slerp(targetQuaternion, 0.1);
+    //object.quaternion.slerp(targetQuaternion, 0.1);
+    spinRocket();
     // Update velocity based on acceleration
     rocketVelocity.add(rocketAcceleration);
 
@@ -286,20 +275,6 @@ function animate() {
   // Render the scene
   renderer.render(scene, camera);
 }
-
-
-// // Add a listener to the window, so we can resize the window and the camera
-// window.addEventListener("resize", function () {
-//   camera.aspect = window.innerWidth / window.innerHeight;
-//   camera.updateProjectionMatrix();
-//   renderer.setSize(window.innerWidth, window.innerHeight);
-// });
-
-// // Add mouse position listener, so we can make the eye move
-// document.onmousemove = (e) => {
-//   mouseX = e.clientX;
-//   mouseY = e.clientY;
-// }
 
 // Start the 3D rendering
 animate();
