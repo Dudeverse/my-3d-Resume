@@ -42,7 +42,7 @@ loader.load(
     // If the file is loaded, add it to the scene
     object = gltf.scene;
     scene.add(object);
-    object.lookAt(new THREE.Vector3(0,0,1));
+    //object.lookAt(new THREE.Vector3(0,0,1));
     const loaderFont = new THREE.FontLoader();
     loaderFont.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', function (font) {
       const createText = (text, position) => {
@@ -140,54 +140,61 @@ loaderFont.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.
   createText('Z', new THREE.Vector3(0, 0, 10));
 });
 
-//const loaderFont = new THREE.FontLoader();
-loaderFont.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', function (font) {
-  const addYearAndDescription = (year, description, zPosition) => {
-    // Create year label
-    const yearGeometry = new THREE.TextGeometry(year.toString(), {
-      font: font,
-      size: 10, // Adjust size for year
-      height: 1, // Thickness of text
-    });
-    const yearMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff }); // White color for year
-    const yearMesh = new THREE.Mesh(yearGeometry, yearMaterial);
-    yearMesh.position.set(0, 10, zPosition); // Position year slightly above the description
-    yearMesh.lookAt(camera.position);
-    scene.add(yearMesh);
+function createBillboard(title, description, position) {
+  const loaderFont = new THREE.FontLoader();
+  
+  loaderFont.load(
+    'https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', 
+    function (font) {
+      // Create the text geometry and material for the title
+      const titleGeometry = new THREE.TextGeometry(title, {
+        font: font,
+        size: 2, // Adjust size as needed
+        height: 0.5, // Extrude depth for text
+      });
+      const titleMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+      const titleMesh = new THREE.Mesh(titleGeometry, titleMaterial);
 
-    // Create description
-    const descriptionGeometry = new THREE.TextGeometry(description, {
-      font: font,
-      size: 5, // Smaller size for description
-      height: 0.5, // Thinner text for description
-    });
-    const descriptionMaterial = new THREE.MeshBasicMaterial({ color: 0xcccccc }); // Light gray color for description
-    const descriptionMesh = new THREE.Mesh(descriptionGeometry, descriptionMaterial);
-    descriptionMesh.position.set(0, -10, -zPosition); // Position description slightly below year
-    descriptionMesh.lookAt(camera.position); // Make the description text face the camera
-    scene.add(descriptionMesh);
-  };
+      // Adjust title position relative to billboard
+      titleMesh.position.set(-10, 5, 0);
 
-  // Data for years and descriptions
-  const timeline = [
-    { year: 2024, description: "Started my career as a software developer.\n Focused on web development." },
-    { year: 2025, description: "Developed and launched my first major project. Gained expertise in React.js." },
-    { year: 2026, description: "Promoted to team lead. Worked on building scalable systems." },
-    { year: 2027, description: "Transitioned to full-stack development and started mentoring new developers." },
-    { year: 2028, description: "Focused on cloud technologies and DevOps practices." },
-    { year: 2029, description: "Led a team to develop a SaaS platform, achieving significant business growth." },
-    { year: 2030, description: "Transitioned into a technical architect role, shaping the company's tech vision." },
-  ];
+      // Create the text geometry and material for the description
+      const descGeometry = new THREE.TextGeometry(description, {
+        font: font,
+        size: 1, // Smaller size for description
+        height: 0.2,
+      });
+      const descMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+      const descMesh = new THREE.Mesh(descGeometry, descMaterial);
 
-  // Add labels and descriptions for each year
-  const spacing = 100; // Distance between each year
-  timeline.forEach((item, index) => {
-    addYearAndDescription(item.year, item.description, (index + 1) * spacing);
-  });
-});
+      // Adjust description position relative to billboard
+      descMesh.position.set(-10, 2, 0);
+
+      // Create a plane to serve as the billboard background
+      const planeGeometry = new THREE.PlaneGeometry(30, 15); // Adjust size as needed
+      const planeMaterial = new THREE.MeshBasicMaterial({ color: 0x333333, side: THREE.DoubleSide });
+      const planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
+
+      // Ensure the text is attached to the billboard
+      planeMesh.add(titleMesh);
+      planeMesh.add(descMesh);
+
+      // Position the billboard at the specified location
+      planeMesh.position.set(position.x, position.y, position.z);
+
+      // Make the billboard face the camera
+      planeMesh.lookAt(camera.position);
+
+      // Add the billboard to the scene
+      scene.add(planeMesh);
+    }
+  );
+}
 
 
-let moveSpeed = 0.25; // Acceleration rate
+
+
+let moveSpeed = 0.025; // Acceleration rate
 let maxSpeed = 1; // Maximum velocity
 let rocketVelocity = new THREE.Vector3(0, 0, 0); // Current velocity
 let rocketAcceleration = new THREE.Vector3(0, 0, 0); // Current acceleration
@@ -267,12 +274,19 @@ function spinRocket() {
     object.rotateOnAxis(new THREE.Vector3(0, 1, 0), spinSpeed);
   }
 }
+
+createBillboard("2024: Rocket Launch", "Started working on intergalactic systems.", { x: 0, y: 0, z: -100 });
+createBillboard("2025: Mars Colony", "Designed first Martian settlement.", { x: 100, y: 0, z: 0 });
+createBillboard("2026: Spaceport", "Opened first public spaceport.", { x: 0, y: 0, z: 100 });
+
+
 function animate() {
   requestAnimationFrame(animate);
 
   if (object) {
     //spinRocket();
-    object.quaternion.slerp(targetQuaternion, 0.2);
+    object.quaternion.slerp(targetQuaternion, 0.15);
+    //camera.quaternion.slerp(targetQuaternion, 0.015);
     
     // Update velocity based on acceleration
     rocketVelocity.add(rocketAcceleration);
@@ -283,18 +297,20 @@ function animate() {
 
     // Apply velocity to the rocket's position
     object.position.add(rocketVelocity);
+    camera.position.add(rocketVelocity);
+    
 
     // Apply friction effect to slow down when no keys are pressed
-    rocketVelocity.multiplyScalar(0.90);
-
+    rocketVelocity.multiplyScalar(0.98);
+    
     // Update the camera position to follow the rocket
     const targetPosition = new THREE.Vector3(
-      object.position.x + 10, // X position relative to rocket
-      object.position.y + 10,  // Y position relative to rocket
+      object.position.x + 4, // X position relative to rocket
+      object.position.y + 4,  // Y position relative to rocket
       object.position.z + 10  // Z position relative to rocket
     );
     camera.position.lerp(targetPosition, 0.09); // Smoothly follow the rocket
-    camera.lookAt(object.position); // Make camera always look at the rocket
+    //camera.lookAt(object.position); // Make camera always look at the rocket
   }
   // Render the scene
   renderer.render(scene, camera);
