@@ -25,16 +25,10 @@ const spaceTextures = cubeTextureLoader.load([
 // Set the scene's background to the skybox
 scene.background = spaceTextures;
 
-// Keep track of the mouse position, so we can make the eye move
-let mouseX = window.innerWidth / 2;
-let mouseY = window.innerHeight / 2;
-
 // Keep the 3D object on a global variable so we can access it later
 let object;
 
-// OrbitControls allow the camera to move around the scene
 let controls;
-
 // Set which object to render
 let objToRender = 'rocket';
 
@@ -48,7 +42,7 @@ loader.load(
     // If the file is loaded, add it to the scene
     object = gltf.scene;
     scene.add(object);
-    object.lookAt(new THREE.Vector3(0,1,0));
+    object.lookAt(new THREE.Vector3(0,0,1));
     const loaderFont = new THREE.FontLoader();
     loaderFont.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', function (font) {
       const createText = (text, position) => {
@@ -146,7 +140,54 @@ loaderFont.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.
   createText('Z', new THREE.Vector3(0, 0, 10));
 });
 
-let moveSpeed = 0.05; // Acceleration rate
+//const loaderFont = new THREE.FontLoader();
+loaderFont.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', function (font) {
+  const addYearAndDescription = (year, description, zPosition) => {
+    // Create year label
+    const yearGeometry = new THREE.TextGeometry(year.toString(), {
+      font: font,
+      size: 10, // Adjust size for year
+      height: 1, // Thickness of text
+    });
+    const yearMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff }); // White color for year
+    const yearMesh = new THREE.Mesh(yearGeometry, yearMaterial);
+    yearMesh.position.set(0, 10, zPosition); // Position year slightly above the description
+    yearMesh.lookAt(camera.position);
+    scene.add(yearMesh);
+
+    // Create description
+    const descriptionGeometry = new THREE.TextGeometry(description, {
+      font: font,
+      size: 5, // Smaller size for description
+      height: 0.5, // Thinner text for description
+    });
+    const descriptionMaterial = new THREE.MeshBasicMaterial({ color: 0xcccccc }); // Light gray color for description
+    const descriptionMesh = new THREE.Mesh(descriptionGeometry, descriptionMaterial);
+    descriptionMesh.position.set(0, -10, -zPosition); // Position description slightly below year
+    descriptionMesh.lookAt(camera.position); // Make the description text face the camera
+    scene.add(descriptionMesh);
+  };
+
+  // Data for years and descriptions
+  const timeline = [
+    { year: 2024, description: "Started my career as a software developer.\n Focused on web development." },
+    { year: 2025, description: "Developed and launched my first major project. Gained expertise in React.js." },
+    { year: 2026, description: "Promoted to team lead. Worked on building scalable systems." },
+    { year: 2027, description: "Transitioned to full-stack development and started mentoring new developers." },
+    { year: 2028, description: "Focused on cloud technologies and DevOps practices." },
+    { year: 2029, description: "Led a team to develop a SaaS platform, achieving significant business growth." },
+    { year: 2030, description: "Transitioned into a technical architect role, shaping the company's tech vision." },
+  ];
+
+  // Add labels and descriptions for each year
+  const spacing = 100; // Distance between each year
+  timeline.forEach((item, index) => {
+    addYearAndDescription(item.year, item.description, (index + 1) * spacing);
+  });
+});
+
+
+let moveSpeed = 0.25; // Acceleration rate
 let maxSpeed = 1; // Maximum velocity
 let rocketVelocity = new THREE.Vector3(0, 0, 0); // Current velocity
 let rocketAcceleration = new THREE.Vector3(0, 0, 0); // Current acceleration
@@ -177,25 +218,25 @@ document.onkeydown = (e) => {
       rocketAcceleration.z = moveSpeed; // Accelerate backward
       setRocketDirection(new THREE.Vector3(0, 0, 1));
       break;
-    // case "a":
-    // case "A":
-    //   rocketAcceleration.x = -moveSpeed; // Accelerate left
-    //   setRocketDirection(new THREE.Vector3(-1, 0, 0));
-    //   break;
-    // case "d":
-    // case "D":
-    //   rocketAcceleration.x = moveSpeed; // Accelerate right
-    //   setRocketDirection(new THREE.Vector3(1, 0, 0)); // Point rocket right
-    //   break;
-    // case "ArrowUp":
-    //   rocketAcceleration.y = moveSpeed; // Accelerate up
-    //   setRocketDirection(new THREE.Vector3(0, 1, 0));
-    //   break;
-    // case "ArrowDown":
-    //   rocketAcceleration.y = -moveSpeed; // Accelerate down
-    //   setRocketDirection(new THREE.Vector3(0, -1, 0));
-    //   break;
-  }
+      case "a":
+      case "A":
+        rocketAcceleration.x = -moveSpeed; // Accelerate left
+        setRocketDirection(new THREE.Vector3(-1, 0, 0));
+        break;
+      case "d":
+      case "D":
+        rocketAcceleration.x = moveSpeed; // Accelerate right
+        setRocketDirection(new THREE.Vector3(1, 0, 0)); // Point rocket right
+        break;
+      case "ArrowUp":
+        rocketAcceleration.y = moveSpeed; // Accelerate up
+        setRocketDirection(new THREE.Vector3(0, 1, 0));
+        break;
+      case "ArrowDown":
+        rocketAcceleration.y = -moveSpeed; // Accelerate down
+        setRocketDirection(new THREE.Vector3(0, -1, 0));
+        break;
+    }
 };
 
 // Key release logic to stop acceleration
@@ -207,16 +248,16 @@ document.onkeyup = (e) => {
     case "S":
       rocketAcceleration.z = 0; // Stop forward/backward acceleration
       break;
-    // case "a":
-    // case "A":
-    // case "d":
-    // case "D":
-    //   rocketAcceleration.x = 0; // Stop left/right acceleration
-    //   break;
-    // case "ArrowUp":
-    // case "ArrowDown":
-    //   rocketAcceleration.y = 0; // Stop up/down acceleration
-    //   break;
+    case "a":
+    case "A":
+    case "d":
+    case "D":
+      rocketAcceleration.x = 0; // Stop left/right acceleration
+      break;
+    case "ArrowUp":
+    case "ArrowDown":
+      rocketAcceleration.y = 0; // Stop up/down acceleration
+      break;
   }
 };
 
@@ -230,8 +271,8 @@ function animate() {
   requestAnimationFrame(animate);
 
   if (object) {
-    spinRocket();
-    //object.quaternion.slerp(targetQuaternion, 0.2);
+    //spinRocket();
+    object.quaternion.slerp(targetQuaternion, 0.2);
     
     // Update velocity based on acceleration
     rocketVelocity.add(rocketAcceleration);
@@ -244,20 +285,17 @@ function animate() {
     object.position.add(rocketVelocity);
 
     // Apply friction effect to slow down when no keys are pressed
-    rocketVelocity.multiplyScalar(0.95);
+    rocketVelocity.multiplyScalar(0.90);
 
     // Update the camera position to follow the rocket
     const targetPosition = new THREE.Vector3(
-      object.position.x + 4, // X position relative to rocket
-      object.position.y + 4,  // Y position relative to rocket
-      object.position.z + 4  // Z position relative to rocket
+      object.position.x + 10, // X position relative to rocket
+      object.position.y + 10,  // Y position relative to rocket
+      object.position.z + 10  // Z position relative to rocket
     );
-    camera.position.lerp(targetPosition, 0.05); // Smoothly follow the rocket
+    camera.position.lerp(targetPosition, 0.09); // Smoothly follow the rocket
     camera.lookAt(object.position); // Make camera always look at the rocket
   }
-
-  //rotateObject(); // Rotate based on targetQuaternion
-
   // Render the scene
   renderer.render(scene, camera);
 }
