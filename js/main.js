@@ -146,7 +146,7 @@ loaderFont.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.
   createText('Z', new THREE.Vector3(0, 0, 10));
 });
 
-let moveSpeed = 0.02; // Acceleration rate
+let moveSpeed = 0.05; // Acceleration rate
 let maxSpeed = 1; // Maximum velocity
 let rocketVelocity = new THREE.Vector3(0, 0, 0); // Current velocity
 let rocketAcceleration = new THREE.Vector3(0, 0, 0); // Current acceleration
@@ -245,8 +245,9 @@ function animate() {
   requestAnimationFrame(animate);
 
   if (object) {
-    //object.quaternion.slerp(targetQuaternion, 0.1);
-    spinRocket();
+    //spinRocket();
+    object.quaternion.slerp(targetQuaternion, 0.1);
+    
     // Update velocity based on acceleration
     rocketVelocity.add(rocketAcceleration);
 
