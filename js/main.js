@@ -48,7 +48,7 @@ loader.load(
     // If the file is loaded, add it to the scene
     object = gltf.scene;
     scene.add(object);
-    //object.lookAt(new THREE.Vector3(0,1,1));
+    object.lookAt(new THREE.Vector3(0,1,0));
     const loaderFont = new THREE.FontLoader();
     loaderFont.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', function (font) {
       const createText = (text, position) => {
@@ -177,24 +177,24 @@ document.onkeydown = (e) => {
       rocketAcceleration.z = moveSpeed; // Accelerate backward
       setRocketDirection(new THREE.Vector3(0, 0, 1));
       break;
-    case "a":
-    case "A":
-      rocketAcceleration.x = -moveSpeed; // Accelerate left
-      setRocketDirection(new THREE.Vector3(-1, 0, 0));
-      break;
-    case "d":
-    case "D":
-      rocketAcceleration.x = moveSpeed; // Accelerate right
-      setRocketDirection(new THREE.Vector3(1, 0, 0)); // Point rocket right
-      break;
-    case "ArrowUp":
-      rocketAcceleration.y = moveSpeed; // Accelerate up
-      setRocketDirection(new THREE.Vector3(0, 1, 0));
-      break;
-    case "ArrowDown":
-      rocketAcceleration.y = -moveSpeed; // Accelerate down
-      setRocketDirection(new THREE.Vector3(0, -1, 0));
-      break;
+    // case "a":
+    // case "A":
+    //   rocketAcceleration.x = -moveSpeed; // Accelerate left
+    //   setRocketDirection(new THREE.Vector3(-1, 0, 0));
+    //   break;
+    // case "d":
+    // case "D":
+    //   rocketAcceleration.x = moveSpeed; // Accelerate right
+    //   setRocketDirection(new THREE.Vector3(1, 0, 0)); // Point rocket right
+    //   break;
+    // case "ArrowUp":
+    //   rocketAcceleration.y = moveSpeed; // Accelerate up
+    //   setRocketDirection(new THREE.Vector3(0, 1, 0));
+    //   break;
+    // case "ArrowDown":
+    //   rocketAcceleration.y = -moveSpeed; // Accelerate down
+    //   setRocketDirection(new THREE.Vector3(0, -1, 0));
+    //   break;
   }
 };
 
@@ -207,46 +207,31 @@ document.onkeyup = (e) => {
     case "S":
       rocketAcceleration.z = 0; // Stop forward/backward acceleration
       break;
-    case "a":
-    case "A":
-    case "d":
-    case "D":
-      rocketAcceleration.x = 0; // Stop left/right acceleration
-      break;
-    case "ArrowUp":
-    case "ArrowDown":
-      rocketAcceleration.y = 0; // Stop up/down acceleration
-      break;
+    // case "a":
+    // case "A":
+    // case "d":
+    // case "D":
+    //   rocketAcceleration.x = 0; // Stop left/right acceleration
+    //   break;
+    // case "ArrowUp":
+    // case "ArrowDown":
+    //   rocketAcceleration.y = 0; // Stop up/down acceleration
+    //   break;
   }
 };
 
 function spinRocket() {
   if (object) {
-    // You can choose which world axis to rotate around, e.g., X, Y, or Z.
-    // For example, rotating around world Y-axis:
-    object.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), spinSpeed);
-    
-    // Or rotating around world X-axis:
-    //object.rotateOnWorldAxis(new THREE.Vector3(0, 0, 0), spinSpeed);
-
-    // Or rotating around world Z-axis:
-    // object.rotateOnWorldAxis(new THREE.Vector3(0, 0, 1), spinSpeed);
-    
-    // For spinning around a combination of axes (for example X and Y):
-    // First, spin around the world X-axis
-    //object.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), spinSpeed * 0.00005);
-    
-    // Then, spin around the world Y-axis
-    //object.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), spinSpeed * 0.00005);
+    // Spin around the rocket's local Z-axis (adjust axis as needed)
+    object.rotateOnAxis(new THREE.Vector3(0, 1, 0), spinSpeed);
   }
 }
-
 function animate() {
   requestAnimationFrame(animate);
 
   if (object) {
-    //spinRocket();
-    object.quaternion.slerp(targetQuaternion, 0.1);
+    spinRocket();
+    //object.quaternion.slerp(targetQuaternion, 0.2);
     
     // Update velocity based on acceleration
     rocketVelocity.add(rocketAcceleration);
@@ -259,13 +244,13 @@ function animate() {
     object.position.add(rocketVelocity);
 
     // Apply friction effect to slow down when no keys are pressed
-    rocketVelocity.multiplyScalar(0.98);
+    rocketVelocity.multiplyScalar(0.95);
 
     // Update the camera position to follow the rocket
     const targetPosition = new THREE.Vector3(
-      object.position.x + 10, // X position relative to rocket
+      object.position.x + 4, // X position relative to rocket
       object.position.y + 4,  // Y position relative to rocket
-      object.position.z + 10  // Z position relative to rocket
+      object.position.z + 4  // Z position relative to rocket
     );
     camera.position.lerp(targetPosition, 0.05); // Smoothly follow the rocket
     camera.lookAt(object.position); // Make camera always look at the rocket
