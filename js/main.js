@@ -34,6 +34,8 @@ let objToRender = 'rocket';
 
 // Instantiate a loader for the .gltf file
 const loader = new GLTFLoader();
+let clock = new THREE.Clock(); // To track time
+let fire; // Variable to hold fire object
 
 // Load the file
 loader.load(
@@ -42,6 +44,25 @@ loader.load(
     // If the file is loaded, add it to the scene
     object = gltf.scene;
     scene.add(object);
+
+    //object.position.set(0,0,0)
+    //object.rotation.set(-Math.PI/2 , 0, 0)
+    const fireLoader = new GLTFLoader();
+    fireLoader.load(
+      'models/fire/scene.gltf',
+    function (gltf) {
+      fire = gltf.scene;
+      fire.position.set(0, 0, 0);
+      fire.rotation.set(Math.PI , 0, 0); // Adjust the position under the rocket
+      fire.scale.set(0.5, 1, 1);
+      object.add(fire); // Attach the fire to the rocket object
+      fire.visible = false; 
+    },
+    undefined,
+    function (error) {
+    console.error(error);
+  }
+);
     //object.lookAt(new THREE.Vector3(0,0,1));
     const loaderFont = new THREE.FontLoader();
     loaderFont.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', function (font) {
@@ -74,6 +95,8 @@ loader.load(
   }
 );
 
+
+
 // Instantiate a new renderer and set its size
 const renderer = new THREE.WebGLRenderer({ alpha: true }); // Alpha: true allows for the transparent background
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -92,11 +115,6 @@ scene.add(topLight);
 
 const ambientLight = new THREE.AmbientLight(0x333333, objToRender === "rocket" ? 5 : 1);
 scene.add(ambientLight);
-
-// This adds controls to the camera, so we can rotate / zoom it with the mouse
-if (objToRender === "rocket") {
-  controls = new OrbitControls(camera, renderer.domElement);
-}
 
 // Load the floor texture (one of the skybox images)
 const floorTexture = new THREE.TextureLoader().load('skybox/landing.jpg');  // Using the front skybox image as the floor texture
@@ -140,60 +158,6 @@ loaderFont.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.
   createText('Z', new THREE.Vector3(0, 0, 10));
 });
 
-function createBillboard(title, description, position) {
-  const loaderFont = new THREE.FontLoader();
-  
-  loaderFont.load(
-    'https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', 
-    function (font) {
-      // Create the text geometry and material for the title
-      const titleGeometry = new THREE.TextGeometry(title, {
-        font: font,
-        size: 2, // Adjust size as needed
-        height: 0.5, // Extrude depth for text
-      });
-      const titleMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
-      const titleMesh = new THREE.Mesh(titleGeometry, titleMaterial);
-
-      // Adjust title position relative to billboard
-      titleMesh.position.set(-10, 5, 0);
-
-      // Create the text geometry and material for the description
-      const descGeometry = new THREE.TextGeometry(description, {
-        font: font,
-        size: 1, // Smaller size for description
-        height: 0.2,
-      });
-      const descMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
-      const descMesh = new THREE.Mesh(descGeometry, descMaterial);
-
-      // Adjust description position relative to billboard
-      descMesh.position.set(-10, 2, 0);
-
-      // Create a plane to serve as the billboard background
-      const planeGeometry = new THREE.PlaneGeometry(30, 15); // Adjust size as needed
-      const planeMaterial = new THREE.MeshBasicMaterial({ color: 0x333333, side: THREE.DoubleSide });
-      const planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
-
-      // Ensure the text is attached to the billboard
-      planeMesh.add(titleMesh);
-      planeMesh.add(descMesh);
-
-      // Position the billboard at the specified location
-      planeMesh.position.set(position.x, position.y, position.z);
-
-      // Make the billboard face the camera
-      planeMesh.lookAt(camera.position);
-
-      // Add the billboard to the scene
-      scene.add(planeMesh);
-    }
-  );
-}
-
-
-
-
 let moveSpeed = 0.025; // Acceleration rate
 let maxSpeed = 1; // Maximum velocity
 let rocketVelocity = new THREE.Vector3(0, 0, 0); // Current velocity
@@ -210,6 +174,22 @@ function setRocketDirection(direction) {
     targetQuaternion = new THREE.Quaternion().setFromUnitVectors(upVector, lookVector);
   }
 }
+
+function whoOSH() {
+  if (fire) {
+    fire.visible = true;  // Show fire when moving forward
+    if (!sound.isPlaying) {
+      sound.play();  // Start sound when moving forward
+    }
+  }
+}
+
+function shwup() {
+  if (fire) fire.visible = false; // Hide fire when not moving
+      if (sound.isPlaying) {
+        sound.stop();  // Stop sound when key is released
+      }
+}
 let spinSpeed=0.25
 // Key press logic for setting acceleration
 document.onkeydown = (e) => {
@@ -218,101 +198,208 @@ document.onkeydown = (e) => {
     case "W":
       rocketAcceleration.z = -moveSpeed; // Accelerate forward
       setRocketDirection(new THREE.Vector3(0, 0, -1));
-      //spinRocket(new THREE.Vector3(0, 0, -1))     
+      //spinRocket(new THREE.Vector3(0, 0, -1))
+      whoOSH();
       break;
     case "s":
     case "S":
       rocketAcceleration.z = moveSpeed; // Accelerate backward
       setRocketDirection(new THREE.Vector3(0, 0, 1));
+      
+      whoOSH();
       break;
-      case "a":
-      case "A":
-        rocketAcceleration.x = -moveSpeed; // Accelerate left
-        setRocketDirection(new THREE.Vector3(-1, 0, 0));
-        break;
-      case "d":
-      case "D":
-        rocketAcceleration.x = moveSpeed; // Accelerate right
-        setRocketDirection(new THREE.Vector3(1, 0, 0)); // Point rocket right
-        break;
-      case "ArrowUp":
-        rocketAcceleration.y = moveSpeed; // Accelerate up
-        setRocketDirection(new THREE.Vector3(0, 1, 0));
-        break;
-      case "ArrowDown":
-        rocketAcceleration.y = -moveSpeed; // Accelerate down
-        setRocketDirection(new THREE.Vector3(0, -1, 0));
-        break;
+    case "a":
+    case "A":
+      rocketAcceleration.x = -moveSpeed; // Accelerate left
+      setRocketDirection(new THREE.Vector3(-1, 0, 0));
+      
+      whoOSH();
+      break;
+    case "d":
+    case "D":
+      rocketAcceleration.x = moveSpeed; // Accelerate right
+      setRocketDirection(new THREE.Vector3(1, 0, 0)); // Point rocket right
+      
+      whoOSH();
+      break;
+    case "ArrowUp":
+      rocketAcceleration.y = moveSpeed; // Accelerate up
+      //setRocketDirection(new THREE.Vector3(0, 1, 0));
+      whoOSH();
+      break;
+    case "ArrowDown":
+      rocketAcceleration.y = -moveSpeed; // Accelerate down
+      //setRocketDirection(new THREE.Vector3(0, -1, 0));
+      whoOSH();
+      break;
     }
 };
 
 // Key release logic to stop acceleration
 document.onkeyup = (e) => {
+  
   switch (e.key) {
     case "w":
     case "W":
     case "s":
     case "S":
       rocketAcceleration.z = 0; // Stop forward/backward acceleration
+      shwup();
       break;
     case "a":
     case "A":
     case "d":
     case "D":
       rocketAcceleration.x = 0; // Stop left/right acceleration
+      
+      shwup();
       break;
     case "ArrowUp":
     case "ArrowDown":
       rocketAcceleration.y = 0; // Stop up/down acceleration
+      shwup();
       break;
   }
 };
 
-function spinRocket() {
-  if (object) {
-    // Spin around the rocket's local Z-axis (adjust axis as needed)
-    object.rotateOnAxis(new THREE.Vector3(0, 1, 0), spinSpeed);
-  }
+
+
+
+
+function createBillboard(title, description, position) {
+  const loaderFont = new THREE.FontLoader();
+
+  loaderFont.load(
+    'https://threejs.org/examples/fonts/helvetiker_regular.typeface.json',
+    function (font) {
+      // Create the text geometry and material for the title
+      const titleGeometry = new THREE.TextGeometry(title, {
+        font: font,
+        size: 2, // Adjust size as needed
+        height: 0.5, // Extrude depth for text
+      });
+      const titleMaterial = new THREE.MeshBasicMaterial({ color: 0x00ffff });
+      const titleMesh = new THREE.Mesh(titleGeometry, titleMaterial);
+
+      // Adjust title position relative to billboard
+      titleMesh.position.set(-10, 5, 0);
+
+      // Create the text geometry and material for the description
+      const descGeometry = new THREE.TextGeometry(description, {
+        font: font,
+        size: 1, // Smaller size for description
+        height: 0.2,
+      });
+      const descMaterial = new THREE.MeshBasicMaterial({ color: 0xff00ff });
+      const descMesh = new THREE.Mesh(descGeometry, descMaterial);
+
+      // Adjust description position relative to billboard
+      descMesh.position.set(-10, 2, 0);
+
+      // Create a plane to serve as the billboard background
+      const planeGeometry = new THREE.PlaneGeometry(30, 15); // Adjust size as needed
+      const planeMaterial = new THREE.MeshBasicMaterial({
+        color: 0x333333,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0
+      });
+      const planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
+
+      // Attach the text to the billboard
+      planeMesh.add(titleMesh);
+      planeMesh.add(descMesh);
+
+      // Position the billboard at the specified location
+      const billboardPosition = new THREE.Vector3(position.x, position.y, position.z);
+      planeMesh.position.copy(billboardPosition);
+
+      // Make the billboard face the camera
+      //planeMesh.lookAt(camera.position);
+
+      // Add the billboard to the scene
+      scene.add(planeMesh);
+
+      // Store initial distance
+      planeMesh.cameraDistance = billboardPosition.distanceTo(camera.position);
+
+      // Set custom properties
+      planeMesh.initialOpacity = 0.01; // Initial dim state
+      planeMesh.maxOpacity = 1.0; // Fully visible state
+      planeMesh.minDistance = 10; // Distance at which it becomes fully visible
+      planeMesh.maxDistance = 50; // Distance at which it becomes fully dim
+      // Add the billboard to an array for easier management during animation
+      billboards.push(planeMesh);
+
+    }
+  );
 }
 
-createBillboard("2024: Rocket Launch", "Started working on intergalactic systems.", { x: 0, y: 0, z: -100 });
-createBillboard("2025: Mars Colony", "Designed first Martian settlement.", { x: 100, y: 0, z: 0 });
-createBillboard("2026: Spaceport", "Opened first public spaceport.", { x: 0, y: 0, z: 100 });
+// In your animatio
 
+// Example usage
+createBillboard("2020: Rocket Launch", "Started working on intergalactic systems.", { x: 50, y: 0, z: -100 });
+createBillboard("2024: Rocket Launch", "Started working on intergalactic systems.", { x: 0, y: 0, z: -200 });
+createBillboard("2020: Rocket Launch", "Started working on intergalactic systems.", { x: 50, y: 0, z: -300 });
+createBillboard("2024: Rocket Launch", "Started working on intergalactic systems.", { x: 0, y: 0, z: -400 });
+createBillboard("2020: Rocket Launch", "Started working on intergalactic systems.", { x: 50, y: 0, z: -500 });
+createBillboard("2024: Rocket Launch", "Started working on intergalactic systems.", { x: 0, y: 0, z: -600 });
+let billboards = []; // Global array to store billboard meshes
+
+
+const fireRotationSpeed = 0.25
+const listener = new THREE.AudioListener();
+camera.add(listener);  // Attach the listener to the camera (or any other object)
+
+// Create an Audio object
+const sound = new THREE.Audio(listener);
+
+// Load a sound file (replace with your own sound URL)
+const audioLoader = new THREE.AudioLoader();
+audioLoader.load('sfx/burning.wav', function (buffer) {
+  sound.setBuffer(buffer);
+  sound.setLoop(true);   // Set to loop if you want continuous sound
+  sound.setVolume(0.4);  // Set volume (0.0 to 1.0)
+  //sound.play();          // Play the sound
+});
 
 function animate() {
   requestAnimationFrame(animate);
 
   if (object) {
-    //spinRocket();
-    object.quaternion.slerp(targetQuaternion, 0.15);
-    //camera.quaternion.slerp(targetQuaternion, 0.015);
-    
-    // Update velocity based on acceleration
+    object.quaternion.slerp(targetQuaternion, 0.4);
+    // Update velocity and position based on input (keep this logic as it is)
     rocketVelocity.add(rocketAcceleration);
-
-    // Clamp velocity to the maximum speed
     rocketVelocity.x = THREE.MathUtils.clamp(rocketVelocity.x, -maxSpeed, maxSpeed);
     rocketVelocity.z = THREE.MathUtils.clamp(rocketVelocity.z, -maxSpeed, maxSpeed);
-
-    // Apply velocity to the rocket's position
     object.position.add(rocketVelocity);
     camera.position.add(rocketVelocity);
-    
-
-    // Apply friction effect to slow down when no keys are pressed
     rocketVelocity.multiplyScalar(0.98);
-    
-    // Update the camera position to follow the rocket
+    // Smoothly follow the rocket with the camera
     const targetPosition = new THREE.Vector3(
-      object.position.x + 4, // X position relative to rocket
-      object.position.y + 4,  // Y position relative to rocket
-      object.position.z + 10  // Z position relative to rocket
+      object.position.x + 4, 
+      object.position.y + 4,  
+      object.position.z + 10  
     );
-    camera.position.lerp(targetPosition, 0.09); // Smoothly follow the rocket
-    //camera.lookAt(object.position); // Make camera always look at the rocket
+    camera.position.lerp(targetPosition, 0.09);
+
+    let elapsedTime = clock.getElapsedTime();
+
+    if (fire) {
+      // Set the minimum and maximum scale values
+      let minScale = 0.20; // Minimum scale value
+      let maxScale = 0.23; // Maximum scale value
+  
+      // Create a sinusoidal factor to scale the object
+      let scaleFactor = minScale + (maxScale - minScale) * (0.5 * Math.sin(elapsedTime * 10) + 0.5);
+  
+      // Apply the scale factor to all axes (X, Y, Z)
+      fire.scale.set(scaleFactor, scaleFactor*2, scaleFactor*2);
+
+      fire.rotation.y += fireRotationSpeed
+      sound.position.set(fire.position.x, fire.position.y, fire.position.z);
+    }
   }
-  // Render the scene
   renderer.render(scene, camera);
 }
 
