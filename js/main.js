@@ -278,7 +278,11 @@ function createBillboard(title, description, position) {
         size: 2, // Adjust size as needed
         height: 0.5, // Extrude depth for text
       });
-      const titleMaterial = new THREE.MeshBasicMaterial({ color: 0x00ffff });
+      const titleMaterial = new THREE.MeshBasicMaterial({ 
+        color: 0xFFE62D, // Regular color for the text
+        //emissive: 0x00ffff, // Emissive color to simulate glow
+        //emissiveIntensity: 1, // Intensity of the glow effect
+      });
       const titleMesh = new THREE.Mesh(titleGeometry, titleMaterial);
 
       // Adjust title position relative to billboard
@@ -290,7 +294,11 @@ function createBillboard(title, description, position) {
         size: 1, // Smaller size for description
         height: 0.2,
       });
-      const descMaterial = new THREE.MeshBasicMaterial({ color: 0xff00ff });
+      const descMaterial = new THREE.MeshBasicMaterial({ 
+        color: 0xFD4499, // Regular color for the description
+        emissive: 0xff00ff, // Emissive color to simulate glow
+        emissiveIntensity: 1, // Intensity of the glow effect
+      });
       const descMesh = new THREE.Mesh(descGeometry, descMaterial);
 
       // Adjust description position relative to billboard
@@ -313,7 +321,10 @@ function createBillboard(title, description, position) {
       // Position the billboard at the specified location
       const billboardPosition = new THREE.Vector3(position.x, position.y, position.z);
       planeMesh.position.copy(billboardPosition);
-
+      // Add a point light to enhance the glow effect (optional)
+      const pointLight = new THREE.PointLight(0x00ffff, 1, 50); // Light color and intensity
+      pointLight.position.set(billboardPosition.x, billboardPosition.y, billboardPosition.z);
+      scene.add(pointLight);
       // Make the billboard face the camera
       //planeMesh.lookAt(camera.position);
 
@@ -334,7 +345,11 @@ function createBillboard(title, description, position) {
     }
   );
 }
-
+// Flickering effect: Randomly change emissive intensity at regular intervals
+function flickerEffect() {
+  titleMaterial.emissiveIntensity = Math.random() * (1.5 - 0.5) + 0.5;
+  descMaterial.emissiveIntensity = Math.random() * (1.5 - 0.5) + 0.5;
+}
 // In your animatio
 
 // Example usage
