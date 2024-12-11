@@ -110,7 +110,7 @@ const floor = new THREE.Mesh(floorGeometry, floorMaterial);
 // Rotate the floor to lie flat (XZ plane) and position it at y = -1
 floor.rotation.x = -Math.PI / 2;  // This ensures the floor lies on the XZ plane
 floor.position.y = -0.75;  // Position the floor below the rocket
-scene.add(floor);
+//scene.add(floor);
 
 // Create axes helper (size 10 is arbitrary, adjust if needed)
 const axesHelper = new THREE.AxesHelper(10);
@@ -139,7 +139,7 @@ loaderFont.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.
   createText('Z', new THREE.Vector3(0, 0, 10));
 });
 
-let moveSpeed = 0.025; // Acceleration rate
+let moveSpeed = 0.015; // Acceleration rate
 let maxSpeed = 1; // Maximum velocity
 let rocketVelocity = new THREE.Vector3(0, 0, 0); // Current velocity
 let rocketAcceleration = new THREE.Vector3(0, 0, 0); // Current acceleration
@@ -246,18 +246,24 @@ document.onkeyup = (e) => {
 function createBillboard(title, description, position) {
   const loaderFont = new THREE.FontLoader();
   loaderFont.load(
-    'https://threejs.org/examples/fonts/helvetiker_regular.typeface.json',
+    'fonts/combine_supercharge.json',
     function (font) {
       const titleGeometry = new THREE.TextGeometry(title, {
         font: font,
-        size: 2, // Adjust size as needed
-        height: 0.5, // Extrude depth for text
+        size: 1.5, // Adjust size as needed
+        height: 0.05, // Extrude depth for text
+        curveSegments: 120,
+        bevelEnabled: true,
+        bevelThickness: 0.0005,
+        bevelSize: 0.01,
+        bevelOffset: 0,
+		    bevelSegments: 12
       });
       const titleMaterial = new THREE.MeshBasicMaterial({ 
         color: 0xFFE62D,
       });
       const titleMesh = new THREE.Mesh(titleGeometry, titleMaterial);
-      titleMesh.position.set(-10, 5, 0);
+      titleMesh.position.set(-20, 5, 0);
       const descGeometry = new THREE.TextGeometry(description, {
         font: font,
         size: 1, // Smaller size for description
@@ -270,12 +276,12 @@ function createBillboard(title, description, position) {
       });
       const descMesh = new THREE.Mesh(descGeometry, descMaterial);
       descMesh.position.set(-10, 2, 0);
-      const planeGeometry = new THREE.PlaneGeometry(30, 15); // Adjust size as needed
+      const planeGeometry = new THREE.PlaneGeometry(0, 0); // Adjust size as needed
       const planeMaterial = new THREE.MeshBasicMaterial({
         color: 0x333333,
         side: THREE.DoubleSide,
         transparent: true,
-        opacity: 0
+        opacity: 1
       });
       const planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
       planeMesh.add(titleMesh);
@@ -326,11 +332,24 @@ audioLoader.load('sfx/burning.wav', function (buffer) {
   sound.setVolume(0.4);  // Set volume (0.0 to 1.0)
   //sound.play();          // Play the sound
 });
-
-createBillboard("Use W to move the rocket ahead", "", { x: 0, y: 0, z: -50 });
-createBillboard("Use Up Arrow to move the rocket up","", {  x: 0, y: 0, z: -100  }); 
-createBillboard("Use A to move the rocket left", "",{x: 0, y: 100, z: -100 });
-
+const material = new THREE.LineBasicMaterial( { color: 0xff0000 } );
+const points = [];
+points.push( new THREE.Vector3( 0, 0, -15 ) );
+points.push( new THREE.Vector3( 0, 0, -75 ) );
+points.push( new THREE.Vector3( 0, 50, -75 ) );
+points.push( new THREE.Vector3( -100, 50, -75 ) );
+points.push( new THREE.Vector3( -100, 50, 0 ) );
+points.push( new THREE.Vector3( -100, 0, 0 ) );
+points.push( new THREE.Vector3( 0, 0, 0 ) );
+const geometry = new THREE.BufferGeometry().setFromPoints( points );
+const line = new THREE.Line( geometry, material );
+scene.add( line );
+createBillboard("Use W to move the rocket ahead", "", { x: 0, y: 0, z: -15 });
+createBillboard("Use Up Arrow to move the rocket up","", {  x: 0, y: 0, z: -75  }); 
+createBillboard("Use A to move the rocket left", "",{x: 0, y: 50, z: -75 });
+createBillboard("Use S to move the rocket backwards", "",{x: -100, y: 50, z: -75 });
+createBillboard("Use down Arrow to move the rocket down", "",{x: -100, y: 50, z: 0 });
+createBillboard("Use d to move the rocket left", "",{x: -100, y: 0, z: 0 });
 //createBillboard("Use D to move the rocket left", "",{});
 
 
@@ -338,19 +357,22 @@ function animate() {
   requestAnimationFrame(animate);
   //console.log(billboards)
   if (object) {
+    const coordinatesDiv = document.getElementById("coordinates");
+    coordinatesDiv.innerHTML = `Position: (${object.position.x.toFixed(2)}, ${object.position.y.toFixed(2)}, ${object.position.z.toFixed(2)})`;
+
     object.quaternion.slerp(targetQuaternion, 0.4);
     rocketVelocity.add(rocketAcceleration);
     rocketVelocity.x = THREE.MathUtils.clamp(rocketVelocity.x, -maxSpeed, maxSpeed);
     rocketVelocity.z = THREE.MathUtils.clamp(rocketVelocity.z, -maxSpeed, maxSpeed);
     object.position.add(rocketVelocity);
     camera.position.add(rocketVelocity);
-    rocketVelocity.multiplyScalar(0.98);
+    rocketVelocity.multiplyScalar(0.96);
     const targetPosition = new THREE.Vector3(
       object.position.x + 4, 
       object.position.y + 4,  
       object.position.z + 10  
     );
-    camera.position.lerp(targetPosition, 0.09);
+    camera.position.lerp(targetPosition, 0.03);
     //camera.lookAt(object.position);
 
     let elapsedTime = clock.getElapsedTime();
