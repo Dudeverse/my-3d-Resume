@@ -205,12 +205,12 @@ document.onkeydown = (e) => {
       break;
     case "ArrowUp":
       rocketAcceleration.y = moveSpeed; // Accelerate up
-      //setRocketDirection(new THREE.Vector3(0, 1, 0));
+      setRocketDirection(new THREE.Vector3(0, 1, 0));
       whoOSH();
       break;
     case "ArrowDown":
       rocketAcceleration.y = -moveSpeed; // Accelerate down
-      //setRocketDirection(new THREE.Vector3(0, -1, 0));
+      setRocketDirection(new THREE.Vector3(0, -1, 0));
       whoOSH();
       break;
     }
