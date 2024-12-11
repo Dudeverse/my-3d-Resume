@@ -60,9 +60,9 @@ loader.load(
         mesh.position.set(position.x, position.y, position.z);
         object.add(mesh); // Attach text to the rocket object
       };
-      createText('X', { x: 5, y: 0, z: 0 });
-      createText('Y', { x: 0, y: 5, z: 0 });
-      createText('Z', { x: 0, y: 0, z: 5 });
+      //createText('X', { x: 5, y: 0, z: 0 });
+      //createText('Y', { x: 0, y: 5, z: 0 });
+      //createText('Z', { x: 0, y: 0, z: 5 });
     });
   },
   
@@ -134,9 +134,9 @@ loaderFont.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.
   };
   
   // Add X, Y, Z labels
-  createText('X', new THREE.Vector3(10, 5, 0));
-  createText('Y', new THREE.Vector3(0, 10, 0));
-  createText('Z', new THREE.Vector3(0, 0, 10));
+  //createText('X', new THREE.Vector3(10, 5, 0));
+  //createText('Y', new THREE.Vector3(0, 10, 0));
+  //createText('Z', new THREE.Vector3(0, 0, 10));
 });
 
 let moveSpeed = 0.015; // Acceleration rate
