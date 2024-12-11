@@ -1,10 +1,42 @@
+// ------------------------------------------------------------------//
+//----------------------- 3D RESUME PROJECT--------------------------//
+// ----------------------------BEGIN---------------------------------//
+
+
+// Project: 3D Resume 
+// Author: Surya Teja Ethalapaka
+
+
+// ---------------------------AUTHOR DETAILS-------------------------//
+// ----------------------------END-----------------------------------//
+// ------------------------------------------------------------------//
+
+
+
+
+// ------------------------------------------------------------------//
+//----------------------- IMPORTS SECTION----------------------------//
+// ----------------------------BEGIN---------------------------------//
+
 import * as THREE from "https://cdn.skypack.dev/three@0.129.0/build/three.module.js";
-import { OrbitControls } from "https://cdn.skypack.dev/three@0.129.0/examples/jsm/controls/OrbitControls.js";
 import { GLTFLoader } from "https://cdn.skypack.dev/three@0.129.0/examples/jsm/loaders/GLTFLoader.js";
 
-const scene = new THREE.Scene();
 
+
+const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+
+// ---------------------- IMPORTS SECTION----------------------------//
+// ----------------------------END-----------------------------------//
+// ------------------------------------------------------------------//
+
+
+
+
+// ------------------------------------------------------------------//
+//----------------------- SKYMAP SECTION-----------------------------//
+// ----------------------------BEGIN---------------------------------//
 
 const cubeTextureLoader = new THREE.CubeTextureLoader();
 const spaceTextures = cubeTextureLoader.load([
@@ -15,22 +47,28 @@ const spaceTextures = cubeTextureLoader.load([
   'skybox/top.png',    // Top face
   'skybox/bottom.png'  // Bottom face
 ]);
-
 scene.background = spaceTextures;
+// ---------------------- SKYMAP SECTION-----------------------------//
+// ----------------------------END-----------------------------------//
+// ------------------------------------------------------------------//
 
+
+
+
+// ------------------------------------------------------------------//
+//---------------- ROCKET + FIRE OBJECT SECTION----------------------//
+// ----------------------------BEGIN---------------------------------//
 let object;
-
 let objToRender = 'rocket';
-
 const loader = new GLTFLoader();
 let clock = new THREE.Clock(); // To track time
 let fire; // Variable to hold fire object
-
 loader.load(
   `models/${objToRender}/scene.gltf`,
   function (gltf) {
     object = gltf.scene;
     scene.add(object);
+
     const fireLoader = new GLTFLoader();
     fireLoader.load(
       'models/fire/scene.gltf',
@@ -40,7 +78,7 @@ loader.load(
       fire.rotation.set(Math.PI , 0, 0); // Adjust the position under the rocket
       fire.scale.set(0.5, 1, 1);
       object.add(fire); // Attach the fire to the rocket object
-      fire.visible = false; 
+      fire.visible = false; // no fire at t=0s
     },
     undefined,
     function (error) {
@@ -60,9 +98,9 @@ loader.load(
         mesh.position.set(position.x, position.y, position.z);
         object.add(mesh); // Attach text to the rocket object
       };
-      //createText('X', { x: 5, y: 0, z: 0 });
-      //createText('Y', { x: 0, y: 5, z: 0 });
-      //createText('Z', { x: 0, y: 0, z: 5 });
+      createText('X', { x: 5, y: 0, z: 0 });
+      createText('Y', { x: 0, y: 5, z: 0 });
+      createText('Z', { x: 0, y: 0, z: 5 });
     });
   },
   
@@ -75,8 +113,14 @@ loader.load(
     console.error(error);
   }
 );
+//---------------- ROCKET + FIRE OBJECT SECTION----------------------//
+// ----------------------------END-----------------------------------//
+// ------------------------------------------------------------------//
 
 
+// ------------------------------------------------------------------//
+//------------------RENDERER, LIGHTS, FLOOR, AXES--------------------//
+// ----------------------------BEGIN---------------------------------//
 
 // Instantiate a new renderer and set its size
 const renderer = new THREE.WebGLRenderer({ alpha: true }); // Alpha: true allows for the transparent background
@@ -93,28 +137,35 @@ const topLight = new THREE.DirectionalLight(0xffffff, 1); // (color, intensity)
 topLight.position.set(500, 500, 500); // top-left-ish
 topLight.castShadow = true;
 scene.add(topLight);
-
 const ambientLight = new THREE.AmbientLight(0x333333, objToRender === "rocket" ? 5 : 1);
 scene.add(ambientLight);
+//-------------------------RENDERER, LIGHTS--------------------------//
+// -----------------------------END----------------------------------//
+// ------------------------------------------------------------------//
+
+
+
+// ------------------------------------------------------------------//
+//----------------------------FLOOR, AXES----------------------------//
+// ----------------------------BEGIN---------------------------------//
 
 // Load the floor texture (one of the skybox images)
 const floorTexture = new THREE.TextureLoader().load('skybox/landing.jpg');  // Using the front skybox image as the floor texture
 floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;  // Repeat the texture for the floor
 floorTexture.repeat.set(10, 10);  // Adjust the repetition to cover a larger area
 
-// Create the floor plane
-const floorGeometry = new THREE.PlaneGeometry(100, 100);  // Large plane to serve as the floor
+const floorGeometry = new THREE.PlaneGeometry(20, 1000);  // Large plane to serve as the floor
 const floorMaterial = new THREE.MeshBasicMaterial({ map: floorTexture, side: THREE.DoubleSide });
 const floor = new THREE.Mesh(floorGeometry, floorMaterial);
 
 // Rotate the floor to lie flat (XZ plane) and position it at y = -1
 floor.rotation.x = -Math.PI / 2;  // This ensures the floor lies on the XZ plane
 floor.position.y = -0.75;  // Position the floor below the rocket
-//scene.add(floor);
+scene.add(floor);
 
 // Create axes helper (size 10 is arbitrary, adjust if needed)
-// const axesHelper = new THREE.AxesHelper(10);
-// scene.add(axesHelper);
+const axesHelper = new THREE.AxesHelper(10);
+scene.add(axesHelper);
 
 // Add labels for axes (x, y, z)
 // Create text labels for each axis (X, Y, Z)
@@ -134,10 +185,20 @@ loaderFont.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.
   };
   
   // Add X, Y, Z labels
-  //createText('X', new THREE.Vector3(10, 5, 0));
-  //createText('Y', new THREE.Vector3(0, 10, 0));
-  //createText('Z', new THREE.Vector3(0, 0, 10));
+  createText('X', new THREE.Vector3(10, 5, 0));
+  createText('Y', new THREE.Vector3(0, 10, 0));
+  createText('Z', new THREE.Vector3(0, 0, 10));
 });
+
+//--------------------------FLOOR, AXES------------------------------//
+// -----------------------------END----------------------------------//
+// ------------------------------------------------------------------//
+
+
+// ------------------------------------------------------------------//
+//----------SET UP VELOCITY, ACCELERATION, DIRECTION QUATERNIONS-----//
+// ----------------------------BEGIN---------------------------------//
+
 
 let moveSpeed = 0.015; // Acceleration rate
 let maxSpeed = 1; // Maximum velocity
@@ -145,16 +206,23 @@ let rocketVelocity = new THREE.Vector3(0, 0, 0); // Current velocity
 let rocketAcceleration = new THREE.Vector3(0, 0, 0); // Current acceleration
 let targetQuaternion = new THREE.Quaternion(); // To store the target direction
 
-// Function to update the rocket's direction (set facing direction)
-function setRocketDirection(direction) {
-  if (object) {
-    const upVector = new THREE.Vector3(0, 1, 0); // Default up direction
-    const lookVector = direction.clone().normalize(); // Normalize the direction vector
+//---------SET UP VELOCITY, ACCELERATION, DIRECTION QUATERNIONS------//
+// -----------------------------END----------------------------------//
+// ------------------------------------------------------------------//
 
-    // Calculate the target quaternion for the new direction
-    targetQuaternion = new THREE.Quaternion().setFromUnitVectors(upVector, lookVector);
-  }
-}
+// ------------------------------------------------------------------//
+//----------SOUNDS AND FIRE VISIBILITY-------------------------------//
+// ----------------------------BEGIN---------------------------------//
+const fireRotationSpeed = 0.25
+const listener = new THREE.AudioListener();
+camera.add(listener);  
+const sound = new THREE.Audio(listener);
+const audioLoader = new THREE.AudioLoader();
+audioLoader.load('sfx/burning.wav', function (buffer) {
+  sound.setBuffer(buffer);
+  sound.setLoop(true);   // Set to loop if you want continuous sound
+  sound.setVolume(0.4);  // Set volume (0.0 to 1.0)
+});
 
 function whoOSH() {
   if (fire) {
@@ -171,7 +239,29 @@ function shwup() {
         sound.stop();  // Stop sound when key is released
       }
 }
-let spinSpeed=0.25
+
+
+//----------SOUNDS AND FIRE VISIBILITY-------------------------------//
+// -----------------------------END----------------------------------//
+// ------------------------------------------------------------------//
+
+
+
+// ------------------------------------------------------------------//
+//----------POINT TOWARDS THE  DIRECTION PRESSED---------------------//
+// ----------------------------BEGIN---------------------------------//
+
+// Function to update the rocket's direction (set facing direction)
+function setRocketDirection(direction) {
+  if (object) {
+    const upVector = new THREE.Vector3(0, 1, 0); // Default up direction
+    const lookVector = direction.clone().normalize(); // Normalize the direction vector
+
+    // Calculate the target quaternion for the new direction
+    targetQuaternion = new THREE.Quaternion().setFromUnitVectors(upVector, lookVector);
+  }
+}
+
 // Key press logic for setting acceleration
 document.onkeydown = (e) => {
   switch (e.key) {
@@ -243,6 +333,14 @@ document.onkeyup = (e) => {
   }
 };
 
+//----------POINT TOWARDS THE  DIRECTION PRESSED---------------------//
+// -----------------------------END----------------------------------//
+// ------------------------------------------------------------------//
+
+
+// ------------------------------------------------------------------//
+//-------------------------BILLBOARDS -------------------------------//
+// ----------------------------BEGIN---------------------------------//
 function createBillboard(title, description, position) {
   const loaderFont = new THREE.FontLoader();
   loaderFont.load(
@@ -330,47 +428,48 @@ function createBillboard(title, description, position) {
   );
 }
 
-
-//createBillboard("2020: Rocket Launch", "Started working on intergalactic systems.", { x: 0, y: 0, z: -300 });
-// Later in your code (outside the createBillboard function):
-
-
 let billboards = []; 
 const someBillboard = billboards[0]; // Assuming it's the first billboard in the billboards array
 
+//-------------------------BILLBOARDS -------------------------------//
+// -----------------------------END----------------------------------//
+// ------------------------------------------------------------------//
 
-const fireRotationSpeed = 0.25
-const listener = new THREE.AudioListener();
-camera.add(listener);  
-const sound = new THREE.Audio(listener);
-const audioLoader = new THREE.AudioLoader();
-audioLoader.load('sfx/burning.wav', function (buffer) {
-  sound.setBuffer(buffer);
-  sound.setLoop(true);   // Set to loop if you want continuous sound
-  sound.setVolume(0.4);  // Set volume (0.0 to 1.0)
-  //sound.play();          // Play the sound
-});
-const material = new THREE.LineBasicMaterial( { color: 0xFAEF5D } );
+
+// ------------------------------------------------------------------//
+//-------------------------CHECKPOINT LINE---------------------------//
+// ----------------------------BEGIN---------------------------------//
+
+
+
+const material = new THREE.LineBasicMaterial( { color: 0xFAEF5D, linewidth: 1 } );
 const points = [];
-points.push( new THREE.Vector3( 0, 0, 0 ) );
-points.push( new THREE.Vector3( 0, 0, -75 ) );
-points.push( new THREE.Vector3( 0, 50, -75 ) );
-points.push( new THREE.Vector3( -100, 50, -75 ) );
-points.push( new THREE.Vector3( -100, 50, 0 ) );
-points.push( new THREE.Vector3( -100, 0, 0 ) );
-points.push( new THREE.Vector3( 0, 0, 0 ) );
+points.push( new THREE.Vector3( 0, 0, -50    ) );
+points.push( new THREE.Vector3( 0, 0, -150    ) );
+points.push( new THREE.Vector3( 0, 0, -250    ) );
+points.push( new THREE.Vector3( 0, 0, -350    ) );
+points.push( new THREE.Vector3( 0, 0, -450    ) );
+points.push( new THREE.Vector3( 0, 0, -550    ) );
+points.push( new THREE.Vector3( 0, 0, -650    ) );
 const geometry = new THREE.BufferGeometry().setFromPoints( points );
 const line = new THREE.Line( geometry, material );
 scene.add( line );
-createBillboard("Press W to move the rocket ahead", "", { x: 0, y: 0, z: -25 });
-createBillboard("Press Up Arrow to move the rocket up","", {  x: 0, y: 0, z: -75  }); 
-createBillboard("Press A to move the rocket left", "",{x: 0, y: 50, z: -75 });
-createBillboard("Press S to move the rocket backwards", "",{x: -100, y: 50, z: -75 });
-createBillboard("Press down Arrow to move the rocket down", "",{x: -100, y: 50, z: 0 });
-createBillboard("Press d to move the rocket left", "",{x: -100, y: 0, z: 0 });
-//createBillboard("Use D to move the rocket left", "",{});
+createBillboard("Press W to move the rocket ahead"        , "", { x: 0,    y: 0,  z: -50 });
+createBillboard("Press Up Arrow to move the rocket up"    , "", { x: 0,    y: 0,  z: -150  }); 
+createBillboard("Press A to move the rocket left"         , "", { x: 0,    y: 0,  z: -250 });
+createBillboard("Press S to move the rocket backwards"    , "", { x: 0,    y: 0,  z: -350 });
+createBillboard("Press down Arrow to move the rocket down", "", { x: 0,    y: 0,  z: -450 });
+createBillboard("Press d to move the rocket left"         , "", { x: 0,    y: 0,  z: -550 });
 
 
+//-------------------------CHECKPOINT LINE---------------------------//
+// -----------------------------END----------------------------------//
+// ------------------------------------------------------------------//
+
+
+// ------------------------------------------------------------------//
+//-------------------------ANIMATE LOOP------------------------------//
+// ----------------------------BEGIN---------------------------------//
 function animate() {
   requestAnimationFrame(animate);
   //console.log(billboards)
@@ -390,7 +489,7 @@ function animate() {
       object.position.y + 4,  
       object.position.z + 10  
     );
-    camera.position.lerp(targetPosition, 0.03);
+    camera.position.lerp(targetPosition, 0.02);
     //camera.lookAt(object.position);
 
     let elapsedTime = clock.getElapsedTime();
@@ -409,3 +508,6 @@ function animate() {
 
 
 animate();
+//-------------------------ANIMATE LOOP------------------------------//
+// -----------------------------END----------------------------------//
+// ------------------------------------------------------------------//
