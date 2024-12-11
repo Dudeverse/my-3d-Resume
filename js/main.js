@@ -407,5 +407,11 @@ function animate() {
   renderer.render(scene, camera);
 }
 
+// Add a listener to the window, so we can resize the window and the camera
+window.addEventListener("resize", function () {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
 
 animate();
