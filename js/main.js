@@ -113,8 +113,8 @@ floor.position.y = -0.75;  // Position the floor below the rocket
 //scene.add(floor);
 
 // Create axes helper (size 10 is arbitrary, adjust if needed)
-const axesHelper = new THREE.AxesHelper(10);
-scene.add(axesHelper);
+// const axesHelper = new THREE.AxesHelper(10);
+// scene.add(axesHelper);
 
 // Add labels for axes (x, y, z)
 // Create text labels for each axis (X, Y, Z)
@@ -254,13 +254,13 @@ function createBillboard(title, description, position) {
         height: 0.05, // Extrude depth for text
         curveSegments: 120,
         bevelEnabled: true,
-        bevelThickness: 0.0005,
+        bevelThickness: 0.005,
         bevelSize: 0.01,
         bevelOffset: 0,
 		    bevelSegments: 12
       });
       const titleMaterial = new THREE.MeshBasicMaterial({ 
-        color: 0xFFE62D,
+        color: 0x1D2B53,
       });
       const titleMesh = new THREE.Mesh(titleGeometry, titleMaterial);
       titleMesh.position.set(-20, 5, 0);
@@ -271,8 +271,6 @@ function createBillboard(title, description, position) {
       });
       const descMaterial = new THREE.MeshBasicMaterial({ 
         color: 0xFD4499, // Regular color for the description
-        emissive: 0xff00ff, // Emissive color to simulate glow
-        emissiveIntensity: 1, // Intensity of the glow effect
       });
       const descMesh = new THREE.Mesh(descGeometry, descMaterial);
       descMesh.position.set(-10, 2, 0);
@@ -281,14 +279,26 @@ function createBillboard(title, description, position) {
         color: 0x333333,
         side: THREE.DoubleSide,
         transparent: true,
-        opacity: 1
+        opacity: 0
       });
       const planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
+      const planeGeometry2 = new THREE.PlaneGeometry(75, 3.5);
+      const planeMaterial2 = new THREE.MeshBasicMaterial({
+        color: 0xFF004D,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.9
+      });
+      const titlebackMesh = new THREE.Mesh(planeGeometry2, planeMaterial2);
+      titlebackMesh.position.set(5,5.65,0)
+      titleMesh.add(titlebackMesh);
       planeMesh.add(titleMesh);
       planeMesh.add(descMesh);
+      planeMesh.add(titlebackMesh);
+      //planeMesh.position.set(-10,10,0)
       // Store title and description meshes as properties of planeMesh
-      planeMesh.titleMesh = titleMesh;
-      planeMesh.descMesh = descMesh;
+      //planeMesh.titleMesh = titleMesh;
+      //planeMesh.descMesh = descMesh;
 
       const billboardPosition = new THREE.Vector3(position.x, position.y, position.z);
       planeMesh.position.copy(billboardPosition);
@@ -297,11 +307,19 @@ function createBillboard(title, description, position) {
       scene.add(pointLight);
       scene.add(planeMesh);
       // Create marker (small sphere to show position)
-      const markerGeometry = new THREE.SphereGeometry(1, 16, 16); // Small sphere
-      const markerMaterial = new THREE.MeshBasicMaterial({ color: 0xFF0000 }); // Red color
+      const markerGeometry = new THREE.SphereGeometry(1.5, 16, 16); // Small sphere
+      const markerMaterial = new THREE.MeshBasicMaterial({ color: 0xFAEF5D, transparent: true, opacity: 0.5 }); // Red color
       const marker = new THREE.Mesh(markerGeometry, markerMaterial);
       marker.position.copy(billboardPosition); // Position the marker at the billboard's location
+      
+      const markerGeometry1 = new THREE.SphereGeometry(0.75, 16, 16); // Small sphere
+      const markerMaterial1 = new THREE.MeshBasicMaterial({ color: 0xFAEF5D, transparent: false, opacity: 0.8 }); // Red color
+      const marker1 = new THREE.Mesh(markerGeometry1, markerMaterial1);
+      marker1.position.copy(billboardPosition); // Position the marker at the billboard's location
+      
       scene.add(marker);
+      scene.add(marker1);
+
       planeMesh.cameraDistance = billboardPosition.distanceTo(camera.position);
       planeMesh.initialOpacity = 0.01; // Initial dim state
       planeMesh.maxOpacity = 1.0; // Fully visible state
@@ -332,9 +350,9 @@ audioLoader.load('sfx/burning.wav', function (buffer) {
   sound.setVolume(0.4);  // Set volume (0.0 to 1.0)
   //sound.play();          // Play the sound
 });
-const material = new THREE.LineBasicMaterial( { color: 0xff0000 } );
+const material = new THREE.LineBasicMaterial( { color: 0xFAEF5D } );
 const points = [];
-points.push( new THREE.Vector3( 0, 0, -15 ) );
+points.push( new THREE.Vector3( 0, 0, 0 ) );
 points.push( new THREE.Vector3( 0, 0, -75 ) );
 points.push( new THREE.Vector3( 0, 50, -75 ) );
 points.push( new THREE.Vector3( -100, 50, -75 ) );
@@ -344,12 +362,12 @@ points.push( new THREE.Vector3( 0, 0, 0 ) );
 const geometry = new THREE.BufferGeometry().setFromPoints( points );
 const line = new THREE.Line( geometry, material );
 scene.add( line );
-createBillboard("Use W to move the rocket ahead", "", { x: 0, y: 0, z: -15 });
-createBillboard("Use Up Arrow to move the rocket up","", {  x: 0, y: 0, z: -75  }); 
-createBillboard("Use A to move the rocket left", "",{x: 0, y: 50, z: -75 });
-createBillboard("Use S to move the rocket backwards", "",{x: -100, y: 50, z: -75 });
-createBillboard("Use down Arrow to move the rocket down", "",{x: -100, y: 50, z: 0 });
-createBillboard("Use d to move the rocket left", "",{x: -100, y: 0, z: 0 });
+createBillboard("Press W to move the rocket ahead", "", { x: 0, y: 0, z: -25 });
+createBillboard("Press Up Arrow to move the rocket up","", {  x: 0, y: 0, z: -75  }); 
+createBillboard("Press A to move the rocket left", "",{x: 0, y: 50, z: -75 });
+createBillboard("Press S to move the rocket backwards", "",{x: -100, y: 50, z: -75 });
+createBillboard("Press down Arrow to move the rocket down", "",{x: -100, y: 50, z: 0 });
+createBillboard("Press d to move the rocket left", "",{x: -100, y: 0, z: 0 });
 //createBillboard("Use D to move the rocket left", "",{});
 
 
