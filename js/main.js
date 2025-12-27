@@ -463,8 +463,7 @@ const resumeMilestones = [
   { year: "Dec 2023", text: "Started job at InTheLoop AI", z: -350 },
   { year: "May 2024", text: "Finished Masters at NJIT", z: -450 },
   { year: "Dec 2024", text: "Finished job at InTheLoop AI", z: -550 },
-  { year: "Jan 2025", text: "Joined Womp 3D", z: -650 },
-  { year: "Dec 2025", text: "Currently at Womp 3D", z: -750 }
+  { year: "Jan 2025", text: "Joined Womp 3D", z: -650 }
 ];
 
 // Create straight line through milestones
