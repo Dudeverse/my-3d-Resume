@@ -123,8 +123,13 @@ loader.load(
 // ----------------------------BEGIN---------------------------------//
 
 // Instantiate a new renderer and set its size
-const renderer = new THREE.WebGLRenderer({ alpha: true }); // Alpha: true allows for the transparent background
+const renderer = new THREE.WebGLRenderer({ 
+  alpha: true,
+  antialias: false, // Disable antialiasing for better performance
+  powerPreference: "high-performance"
+});
 renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); // Limit pixel ratio for performance
 
 // Add the renderer to the DOM
 document.getElementById("container3D").appendChild(renderer.domElement);
@@ -200,11 +205,17 @@ loaderFont.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.
 // ----------------------------BEGIN---------------------------------//
 
 
-let moveSpeed = 0.015; // Acceleration rate
-let maxSpeed = 1; // Maximum velocity
+let moveSpeed = 0.025; // Acceleration rate (increased for faster movement)
+let maxSpeed = 1.5; // Maximum velocity (increased)
 let rocketVelocity = new THREE.Vector3(0, 0, 0); // Current velocity
 let rocketAcceleration = new THREE.Vector3(0, 0, 0); // Current acceleration
 let targetQuaternion = new THREE.Quaternion(); // To store the target direction
+
+// Separate tracking for keyboard and hand inputs
+let keyboardInput = { x: 0, y: 0, z: 0 };
+let handInput = { x: 0, y: 0, z: 0 };
+let isKeyboardActive = false;
+let isHandInputActive = false;
 
 //---------SET UP VELOCITY, ACCELERATION, DIRECTION QUATERNIONS------//
 // -----------------------------END----------------------------------//
@@ -264,72 +275,73 @@ function setRocketDirection(direction) {
 
 // Key press logic for setting acceleration
 document.onkeydown = (e) => {
+  isKeyboardActive = true;
   switch (e.key) {
     case "w":
     case "W":
-      rocketAcceleration.z = -moveSpeed; // Accelerate forward
+      keyboardInput.z = -moveSpeed; // Accelerate forward
       setRocketDirection(new THREE.Vector3(0, 0, -1));
-      //spinRocket(new THREE.Vector3(0, 0, -1))
       whoOSH();
       break;
     case "s":
     case "S":
-      rocketAcceleration.z = moveSpeed; // Accelerate backward
+      keyboardInput.z = moveSpeed; // Accelerate backward
       setRocketDirection(new THREE.Vector3(0, 0, 1));
-      
       whoOSH();
       break;
     case "a":
     case "A":
-      rocketAcceleration.x = -moveSpeed; // Accelerate left
+      keyboardInput.x = -moveSpeed; // Accelerate left
       setRocketDirection(new THREE.Vector3(-1, 0, 0));
-      
       whoOSH();
       break;
     case "d":
     case "D":
-      rocketAcceleration.x = moveSpeed; // Accelerate right
-      setRocketDirection(new THREE.Vector3(1, 0, 0)); // Point rocket right
-      
+      keyboardInput.x = moveSpeed; // Accelerate right
+      setRocketDirection(new THREE.Vector3(1, 0, 0));
       whoOSH();
       break;
     case "ArrowUp":
-      rocketAcceleration.y = moveSpeed; // Accelerate up
-      //setRocketDirection(new THREE.Vector3(0, 1, 0));
+      keyboardInput.y = moveSpeed; // Accelerate up
       whoOSH();
       break;
     case "ArrowDown":
-      rocketAcceleration.y = -moveSpeed; // Accelerate down
-      //setRocketDirection(new THREE.Vector3(0, -1, 0));
+      keyboardInput.y = -moveSpeed; // Accelerate down
       whoOSH();
       break;
     }
+  updateCombinedInput();
 };
 
 // Key release logic to stop acceleration
 document.onkeyup = (e) => {
-  
   switch (e.key) {
     case "w":
     case "W":
     case "s":
     case "S":
-      rocketAcceleration.z = 0; // Stop forward/backward acceleration
-      shwup();
+      keyboardInput.z = 0; // Stop forward/backward acceleration
       break;
     case "a":
     case "A":
     case "d":
     case "D":
-      rocketAcceleration.x = 0; // Stop left/right acceleration
-      
-      shwup();
+      keyboardInput.x = 0; // Stop left/right acceleration
       break;
     case "ArrowUp":
     case "ArrowDown":
-      rocketAcceleration.y = 0; // Stop up/down acceleration
-      shwup();
+      keyboardInput.y = 0; // Stop up/down acceleration
       break;
+  }
+  
+  // Check if keyboard is still active
+  isKeyboardActive = keyboardInput.x !== 0 || keyboardInput.y !== 0 || keyboardInput.z !== 0;
+  
+  updateCombinedInput();
+  
+  // Only stop effects if neither keyboard nor hand is active
+  if (!isKeyboardActive && !isHandInputActive) {
+    shwup();
   }
 };
 
@@ -349,13 +361,13 @@ function createBillboard(title, description, position) {
       const titleGeometry = new THREE.TextGeometry(title, {
         font: font,
         size: 1.5, // Adjust size as needed
-        height: 0.05, // Extrude depth for text
-        curveSegments: 120,
-        bevelEnabled: true,
-        bevelThickness: 0.005,
-        bevelSize: 0.01,
+        height: 0.02, // Reduced extrude depth
+        curveSegments: 8, // Reduced from 120 for performance
+        bevelEnabled: false, // Disabled bevel for performance
+        bevelThickness: 0,
+        bevelSize: 0,
         bevelOffset: 0,
-		    bevelSegments: 12
+		    bevelSegments: 0
       });
       const titleMaterial = new THREE.MeshBasicMaterial({ 
         color: 0x1D2B53,
@@ -365,7 +377,8 @@ function createBillboard(title, description, position) {
       const descGeometry = new THREE.TextGeometry(description, {
         font: font,
         size: 1, // Smaller size for description
-        height: 0.2,
+        height: 0.01, // Reduced height for performance
+        curveSegments: 4 // Added for performance
       });
       const descMaterial = new THREE.MeshBasicMaterial({ 
         color: 0xFD4499, // Regular color for the description
@@ -442,24 +455,32 @@ const someBillboard = billboards[0]; // Assuming it's the first billboard in the
 
 
 
+// Resume milestones data
+const resumeMilestones = [
+  { year: "2021", text: "Completed BTech CSE", z: -50 },
+  { year: "2022", text: "Completed work at Sri Sai Oilfield International", z: -150 },
+  { year: "Sept 2022", text: "Started Masters at NJIT", z: -250 },
+  { year: "Dec 2023", text: "Started job at InTheLoop AI", z: -350 },
+  { year: "May 2024", text: "Finished Masters at NJIT", z: -450 },
+  { year: "Dec 2024", text: "Finished job at InTheLoop AI", z: -550 },
+  { year: "Jan 2025", text: "Joined Womp 3D", z: -650 },
+  { year: "Dec 2025", text: "Currently at Womp 3D", z: -750 }
+];
+
+// Create straight line through milestones
 const material = new THREE.LineBasicMaterial( { color: 0xFAEF5D, linewidth: 1 } );
 const points = [];
-points.push( new THREE.Vector3( 0, 0, -50    ) );
-points.push( new THREE.Vector3( 0, 0, -150    ) );
-points.push( new THREE.Vector3( 0, 0, -250    ) );
-points.push( new THREE.Vector3( 0, 0, -350    ) );
-points.push( new THREE.Vector3( 0, 0, -450    ) );
-points.push( new THREE.Vector3( 0, 0, -550    ) );
-points.push( new THREE.Vector3( 0, 0, -650    ) );
+resumeMilestones.forEach(milestone => {
+  points.push(new THREE.Vector3(0, 0, milestone.z));
+});
 const geometry = new THREE.BufferGeometry().setFromPoints( points );
 const line = new THREE.Line( geometry, material );
 scene.add( line );
-createBillboard("Press W to move the rocket ahead"        , "", { x: 0,    y: 0,  z: -50 });
-createBillboard("Press Up Arrow to move the rocket up"    , "", { x: 0,    y: 0,  z: -150  }); 
-createBillboard("Press A to move the rocket left"         , "", { x: 0,    y: 0,  z: -250 });
-createBillboard("Press S to move the rocket backwards"    , "", { x: 0,    y: 0,  z: -350 });
-createBillboard("Press down Arrow to move the rocket down", "", { x: 0,    y: 0,  z: -450 });
-createBillboard("Press d to move the rocket left"         , "", { x: 0,    y: 0,  z: -550 });
+
+// Create billboards for each milestone
+resumeMilestones.forEach(milestone => {
+  createBillboard(`${milestone.year}: ${milestone.text}`, "", { x: 0, y: 0, z: milestone.z });
+});
 
 
 //-------------------------CHECKPOINT LINE---------------------------//
@@ -470,8 +491,24 @@ createBillboard("Press d to move the rocket left"         , "", { x: 0,    y: 0,
 // ------------------------------------------------------------------//
 //-------------------------ANIMATE LOOP------------------------------//
 // ----------------------------BEGIN---------------------------------//
+
+// Performance monitoring
+let frameCount = 0;
+let lastTime = performance.now();
+const fpsElement = document.getElementById('fps-counter');
+
 function animate() {
   requestAnimationFrame(animate);
+  
+  // FPS Counter
+  frameCount++;
+  const currentTime = performance.now();
+  if (currentTime - lastTime >= 1000) {
+    const fps = Math.round((frameCount * 1000) / (currentTime - lastTime));
+    if (fpsElement) fpsElement.textContent = `FPS: ${fps}`;
+    frameCount = 0;
+    lastTime = currentTime;
+  }
   //console.log(billboards)
   if (object) {
     const coordinatesDiv = document.getElementById("coordinates");
@@ -508,6 +545,300 @@ function animate() {
 
 
 animate();
+
+// ------------------------------------------------------------------//
+//-------------------------HAND TRACKING-----------------------------//
+// ----------------------------BEGIN---------------------------------//
+
+// Hand tracking variables
+let isHandClenched = false;
+let handTrackingActive = false;
+let handTrackingFrameCount = 0; // For throttling hand tracking
+let totalFramesProcessed = 0; // For debugging
+const videoElement = document.getElementById('video-element');
+const handStatusElement = document.getElementById('hand-status');
+const frameCounterElement = document.getElementById('frame-counter');
+const clenchConfidenceElement = document.getElementById('clench-confidence');
+
+// Hand tracking functions (throttled for performance)
+function onHandResults(results) {
+  // Update frame counter
+  totalFramesProcessed++;
+  if (frameCounterElement) {
+    frameCounterElement.textContent = `Frames: ${totalFramesProcessed}`;
+  }
+  
+  // Debug: Log that this function is being called
+  if (totalFramesProcessed === 1) {
+    console.log('✅ onHandResults function is being called!');
+  }
+  
+  // Throttle hand tracking to every 3rd frame for performance
+  handTrackingFrameCount++;
+  if (handTrackingFrameCount % 3 !== 0) return;
+  
+  // Debug logging (less frequent to avoid spam)
+  if (handTrackingFrameCount % 30 === 0) {
+    console.log('Hand results received:', results);
+    console.log('Landmarks found:', results.multiHandLandmarks ? results.multiHandLandmarks.length : 0);
+  }
+  
+  if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+    handTrackingActive = true;
+    
+    // Show hand detected status (will be updated below if clenched)
+    if (!isHandClenched) {
+      handStatusElement.innerText = "Hand Status: Detected - Try Clenching";
+      handStatusElement.style.color = "#00e5ff";
+    }
+
+    const hand = results.multiHandLandmarks[0];
+    
+    // Simple fist detection - just check distance from fingertips to wrist
+    const wrist = hand[0];
+    const tips = [hand[8], hand[12], hand[16], hand[20]]; // Index, Middle, Ring, Pinky tips
+    
+    let avgDistanceToWrist = 0;
+    tips.forEach(tip => {
+      avgDistanceToWrist += Math.hypot(tip.x - wrist.x, tip.y - wrist.y);
+    });
+    avgDistanceToWrist /= 4;
+    
+    // If fingers are curled in (small distance to wrist), hand is clenched
+    const wasHandClenched = isHandClenched;
+    isHandClenched = avgDistanceToWrist < 0.25;
+    
+    // Update confidence indicator
+    if (clenchConfidenceElement) {
+      clenchConfidenceElement.textContent = `Distance: ${avgDistanceToWrist.toFixed(3)}`;
+      clenchConfidenceElement.style.color = isHandClenched ? '#00ff00' : '#ff6666';
+    }
+    
+    if (isHandClenched && !wasHandClenched) {
+      // Hand just clenched - start moving forward
+      const status = isKeyboardActive ? "Hand + Keyboard Active" : "Hand Control Active";
+      handStatusElement.innerText = `Hand Status: Clenched - ${status}`;
+      handStatusElement.style.color = "#00ff00";
+      startHandMovement();
+    } else if (!isHandClenched && wasHandClenched) {
+      // Hand just opened - stop moving
+      const status = isKeyboardActive ? "Keyboard Still Active" : "Stopped";
+      handStatusElement.innerText = `Hand Status: Open - ${status}`;
+      handStatusElement.style.color = "#ffff00";
+      stopHandMovement();
+    }
+  } else {
+    handTrackingActive = false;
+    handStatusElement.innerText = "Hand Status: Show Hand";
+    handStatusElement.style.color = "#555";
+    
+    // Stop movement when no hand detected
+    if (isHandClenched) {
+      isHandClenched = false;
+      stopHandMovement();
+    }
+  }
+}
+
+function startHandMovement() {
+  // Move forward (same as pressing W)
+  isHandInputActive = true;
+  handInput.z = -moveSpeed;
+  setRocketDirection(new THREE.Vector3(0, 0, -1));
+  updateCombinedInput();
+  whoOSH();
+}
+
+function stopHandMovement() {
+  // Stop forward movement (same as releasing W)
+  isHandInputActive = false;
+  handInput.z = 0;
+  updateCombinedInput();
+  
+  // Only stop effects if neither keyboard nor hand is active
+  if (!isKeyboardActive && !isHandInputActive) {
+    shwup();
+  }
+}
+
+// Function to combine keyboard and hand inputs
+function updateCombinedInput() {
+  // Combine inputs - hand takes priority for Z-axis when both are active
+  if (isHandInputActive && isKeyboardActive) {
+    // Hand controls forward/backward, keyboard controls left/right/up/down
+    rocketAcceleration.x = keyboardInput.x;
+    rocketAcceleration.y = keyboardInput.y;
+    rocketAcceleration.z = handInput.z; // Hand takes priority for forward movement
+  } else if (isHandInputActive) {
+    // Only hand input
+    rocketAcceleration.x = handInput.x;
+    rocketAcceleration.y = handInput.y;
+    rocketAcceleration.z = handInput.z;
+  } else if (isKeyboardActive) {
+    // Only keyboard input
+    rocketAcceleration.x = keyboardInput.x;
+    rocketAcceleration.y = keyboardInput.y;
+    rocketAcceleration.z = keyboardInput.z;
+  } else {
+    // No input
+    rocketAcceleration.x = 0;
+    rocketAcceleration.y = 0;
+    rocketAcceleration.z = 0;
+  }
+}
+
+// Initialize MediaPipe Hands with proper loading check
+function initializeHandTracking() {
+  console.log('Checking MediaPipe availability...');
+  console.log('Hands available:', typeof window.Hands !== 'undefined');
+  console.log('Camera available:', typeof window.Camera !== 'undefined');
+  
+  if (typeof window.Hands !== 'undefined' && typeof window.Camera !== 'undefined') {
+    console.log('Initializing MediaPipe Hands...');
+    
+    const hands = new window.Hands({
+      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+    });
+    
+    hands.setOptions({
+      maxNumHands: 1,
+      modelComplexity: 0, // Reduced from 1 to 0 for better performance
+      minDetectionConfidence: 0.7, // Increased for more stable detection
+      minTrackingConfidence: 0.7 // Increased for more stable tracking
+    });
+    
+    hands.onResults(onHandResults);
+    
+    // Verify the callback is set
+    console.log('MediaPipe hands callback set, starting camera...');
+    
+    // Initialize camera with reduced resolution for performance
+    const camera_utils = new window.Camera(videoElement, {
+      onFrame: async () => {
+        try {
+          // Always send frames to MediaPipe (removed throttling here since we throttle in onHandResults)
+          await hands.send({image: videoElement});
+          
+          // Debug: Log every 60 frames to show camera is working
+          if (totalFramesProcessed % 60 === 0) {
+            console.log('Camera frame sent to MediaPipe, total frames:', totalFramesProcessed);
+          }
+        } catch (error) {
+          console.error('Error sending frame to MediaPipe:', error);
+        }
+      },
+      width: 240, // Reduced from 320
+      height: 180  // Reduced from 240
+    });
+    
+    // Request camera permission first
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(() => {
+        console.log('Camera permission granted');
+        return camera_utils.start();
+      })
+      .then(() => {
+        console.log('Camera started successfully');
+        handStatusElement.innerText = "Hand Status: Ready - Show Your Hand";
+        handStatusElement.style.color = "#00ff00";
+        
+        // Update status after a short delay to ensure everything is ready
+        setTimeout(() => {
+          if (handStatusElement.innerText.includes("Ready")) {
+            handStatusElement.innerText = "Hand Status: Show Hand to Camera";
+            handStatusElement.style.color = "#00e5ff";
+          }
+        }, 2000);
+        
+        // Check if frames are being processed after 5 seconds
+        setTimeout(() => {
+          if (totalFramesProcessed === 0) {
+            console.error('❌ No frames processed after 5 seconds - camera may not be working');
+            handStatusElement.innerText = "Hand Status: Camera Not Processing";
+            handStatusElement.style.color = "#ff0000";
+          } else {
+            console.log(`✅ ${totalFramesProcessed} frames processed - camera working`);
+          }
+        }, 5000);
+      })
+      .catch((error) => {
+        console.error('Camera initialization failed:', error);
+        handStatusElement.innerText = "Hand Status: Camera Access Denied";
+        handStatusElement.style.color = "#ff0000";
+      });
+    
+  } else {
+    console.log('MediaPipe not loaded, retrying in 1 second...');
+    handStatusElement.innerText = "Hand Status: Loading MediaPipe...";
+    handStatusElement.style.color = "#ffaa00";
+    
+    // Retry after 1 second
+    setTimeout(initializeHandTracking, 1000);
+  }
+}
+
+// Start initialization after a short delay to ensure scripts are loaded
+setTimeout(initializeHandTracking, 500);
+
+// Also try when window is fully loaded as a backup
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    if (!handTrackingActive && handStatusElement.innerText.includes('Waiting')) {
+      console.log('Backup initialization attempt...');
+      initializeHandTracking();
+    }
+  }, 1000);
+});
+
+// Add test button functionality
+document.addEventListener('DOMContentLoaded', () => {
+  const testButton = document.getElementById('test-hand');
+  const testClenchButton = document.getElementById('test-clench');
+  const testOpenButton = document.getElementById('test-open');
+  
+  if (testButton) {
+    testButton.addEventListener('click', () => {
+      console.log('Manual test triggered');
+      console.log('Hand tracking active:', handTrackingActive);
+      console.log('Video element:', videoElement);
+      console.log('Current status:', handStatusElement.innerText);
+      
+      // Simulate hand detection for testing
+      handStatusElement.innerText = "Hand Status: Test - Move Forward!";
+      handStatusElement.style.color = "#00ff00";
+      startHandMovement();
+      
+      setTimeout(() => {
+        handStatusElement.innerText = "Hand Status: Test Complete";
+        handStatusElement.style.color = "#00e5ff";
+        stopHandMovement();
+      }, 2000);
+    });
+  }
+  
+  if (testClenchButton) {
+    testClenchButton.addEventListener('click', () => {
+      console.log('Simulating hand clench');
+      handStatusElement.innerText = "Hand Status: Simulated Clench";
+      handStatusElement.style.color = "#00ff00";
+      startHandMovement();
+    });
+  }
+  
+  if (testOpenButton) {
+    testOpenButton.addEventListener('click', () => {
+      console.log('Simulating hand open');
+      handStatusElement.innerText = "Hand Status: Simulated Open";
+      handStatusElement.style.color = "#ffff00";
+      stopHandMovement();
+    });
+  }
+});
+
+//-------------------------HAND TRACKING-----------------------------//
+// -----------------------------END----------------------------------//
+// ------------------------------------------------------------------//
+
 //-------------------------ANIMATE LOOP------------------------------//
 // -----------------------------END----------------------------------//
 // ------------------------------------------------------------------//

@@ -6,8 +6,13 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>A simple Three.JS App</title>
+    <title>3D Resume - Hand Controlled</title>
     <link rel="stylesheet" href="css/style.css" />
+    <!-- MediaPipe Hands -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" onload="console.log('Camera utils loaded')" onerror="console.error('Failed to load camera utils')"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" onload="console.log('Control utils loaded')" onerror="console.error('Failed to load control utils')"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" onload="console.log('Drawing utils loaded')" onerror="console.error('Failed to load drawing utils')"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" onload="console.log('Hands loaded, Hands available:', typeof Hands !== 'undefined')" onerror="console.error('Failed to load hands')"></script>
   </head>
   <body>
     <header>
@@ -18,6 +23,39 @@
       <div id="container3D"></div>
       <div id="coordinates" style="position: fixed; top: 10px; left: 10px; color: white; background: black; padding: 5px;">
         Position: (0, 0, 0)
+      </div>
+      <!-- Camera preview for hand tracking -->
+      <video id="video-element" playsinline style="position: fixed; bottom: 20px; right: 20px; width: 160px; height: 120px; border-radius: 12px; transform: scaleX(-1); opacity: 0.8; border: 2px solid #00e5ff;"></video>
+      <!-- Frame counter to show if camera is active -->
+      <div id="frame-counter" style="position: fixed; bottom: 150px; right: 20px; color: #00e5ff; background: rgba(0,0,0,0.7); padding: 5px 8px; border-radius: 4px; font-family: monospace; font-size: 10px;">
+        Frames: 0
+      </div>
+      <!-- Clench confidence indicator -->
+      <div id="clench-confidence" style="position: fixed; bottom: 180px; right: 20px; color: #ffaa00; background: rgba(0,0,0,0.7); padding: 5px 8px; border-radius: 4px; font-family: monospace; font-size: 10px;">
+        Clench: 0/3
+      </div>
+      <!-- Hand tracking status -->
+      <div id="hand-status" style="position: fixed; bottom: 20px; left: 20px; color: #00e5ff; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 8px; font-family: monospace;">
+        Hand Status: Waiting...
+      </div>
+      <!-- Test buttons for debugging -->
+      <button id="test-hand" style="position: fixed; bottom: 80px; left: 20px; padding: 8px 12px; background: rgba(0,229,255,0.2); border: 1px solid #00e5ff; color: #00e5ff; border-radius: 4px; cursor: pointer; font-family: monospace; font-size: 11px;">
+        Test Movement
+      </button>
+      <button id="test-clench" style="position: fixed; bottom: 110px; left: 20px; padding: 8px 12px; background: rgba(0,255,0,0.2); border: 1px solid #00ff00; color: #00ff00; border-radius: 4px; cursor: pointer; font-family: monospace; font-size: 11px;">
+        Simulate Clench
+      </button>
+      <button id="test-open" style="position: fixed; bottom: 140px; left: 20px; padding: 8px 12px; background: rgba(255,255,0,0.2); border: 1px solid #ffff00; color: #ffff00; border-radius: 4px; cursor: pointer; font-family: monospace; font-size: 11px;">
+        Simulate Open
+      </button>
+      <!-- Controls info -->
+      <div id="controls-info" style="position: fixed; top: 10px; right: 10px; color: white; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 8px; font-size: 12px; font-family: monospace;">
+        <div><strong>Hand Controls:</strong></div>
+        <div>🤜 Clasp hand to move forward</div>
+        <div>✋ Open hand to stop</div>
+        <div style="margin-top: 8px;"><strong>Keyboard:</strong></div>
+        <div>W/A/S/D - Move | ↑↓ - Up/Down</div>
+        <div id="fps-counter" style="margin-top: 8px; color: #00ff00;">FPS: --</div>
       </div>
     </main>
     

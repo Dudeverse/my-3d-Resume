@@ -1,0 +1,29 @@
+{
+  "name": "3d-resume-hand-tracking",
+  "version": "1.0.0",
+  "description": "3D Resume with Hand Gesture Controls",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx http-server . -p 3000 -c-1 --cors -o",
+    "start": "npm run dev",
+    "serve": "npx http-server . -p 8080 -c-1 --cors",
+    "build": "echo 'No build process needed for this static project'",
+    "preview": "npx http-server . -p 4173 -c-1 --cors -o"
+  },
+  "keywords": [
+    "3d",
+    "resume",
+    "threejs",
+    "hand-tracking",
+    "mediapipe",
+    "webgl"
+  ],
+  "author": "Surya Teja Ethalapaka",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
